@@ -1,21 +1,46 @@
-import type { RouteRecordRaw } from "vue-router";
+import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
   {
-    path: "/",
-    component: () => import("@/layouts/MainLayout.vue"),
+    path: '/',
+    component: () => import('../layouts/MainLayout.vue'),
+    meta: { requiresAuth: true },
     children: [
-      { path: "", component: () => import("@/pages/IndexPage.vue") },
-      { path: "second", component: () => import("@/pages/SecondPage.vue") }
+      {
+        path: '',
+        redirect: '/insert-stock'
+      },
+      {
+        path: 'insert-stock',
+        component: () => import('../pages/InsertStock.vue')
+      },
+      {
+        path: 'register-stock',
+        component: () => import('../pages/RegisterStock.vue')
+      },
+      {
+        path: 'stock-list',
+        component: () => import('../pages/StockList.vue')
+      },
+      {
+        path: 'scan-barcode',
+        component: () => import('../pages/ScanBarcode.vue')
+      }
     ]
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
   {
-    path: "/:catchAll(.*)*",
-    component: () => import("@/pages/ErrorNotFound.vue")
+    path: '/login',
+    component: () => import('../pages/LoginPage.vue')
+  },
+  {
+    path: '/auth/callback',
+    component: () => import('../pages/OAuthCallback.vue')
+  },
+  // Catch-all route for 404
+  {
+    path: '/:catchAll(.*)*',
+    component: () => import('../pages/ErrorNotFound.vue')
   }
-];
+]
 
-export default routes;
+export default routes

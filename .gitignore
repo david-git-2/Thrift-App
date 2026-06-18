@@ -1,26 +1,97 @@
+# OS / editor
 .DS_Store
-.thumbs.db
-node_modules
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+thumbs.db
+*.swp
+*.swo
+*~
 
-# .env files
-.env*
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
-# Quasar core related directories
-.quasar
-/dist
-/quasar.config.*.temporary.compiled*
+# Dependencies
+node_modules/
+src-capacitor/node_modules/
+src-cordova/node_modules/
 
-# Cordova related directories and files
-/src-cordova/node_modules
-/src-cordova/platforms
-/src-cordova/plugins
-/src-cordova/www
+# Environment & secrets (never commit)
+.env
+.env.*
+!.env.example
 
-# Capacitor related directories and files
-/src-capacitor/www
-/src-capacitor/node_modules
+# Quasar / Vite build output
+.quasar/
+dist/
+src-capacitor/www/
+quasar.config.*.temporary.compiled*
 
-# Log files
+# Vite / tooling caches
+node_modules/.vite/
+node_modules/.q-cache/
+*.tsbuildinfo
+.eslintcache
+.oxlintcache
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Cordova (legacy; kept for Quasar template compatibility)
+src-cordova/platforms/
+src-cordova/plugins/
+src-cordova/www/
+
+# Capacitor — native build artifacts & synced web assets
+src-capacitor/android/.gradle/
+src-capacitor/android/build/
+src-capacitor/android/app/build/
+src-capacitor/android/local.properties
+src-capacitor/android/capacitor-cordova-android-plugins/
+src-capacitor/android/app/src/main/assets/public/
+src-capacitor/android/app/src/main/assets/capacitor.config.json
+src-capacitor/android/app/src/main/assets/capacitor.plugins.json
+src-capacitor/android/app/src/main/res/xml/config.xml
+src-capacitor/android/.idea/
+src-capacitor/android/.kotlin/
+
+# Android binaries
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.hprof
+
+# iOS (if added later)
+src-capacitor/ios/App/Pods/
+src-capacitor/ios/App/build/
+src-capacitor/ios/DerivedData/
+
+# Misc
+*.log
+*.tmp
+*.temp
+.cache/

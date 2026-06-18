@@ -1,1 +1,195 @@
-// app global css
+:root {
+  --bw-brand-base: #fbfaf7;
+  --bw-brand-surface: #ffffff;
+  --bw-brand-border: #e7e1d8;
+  --bw-brand-ink: #171412;
+  --bw-brand-muted: #736a61;
+  --bw-brand-accent: #7c3aed;
+  --bw-brand-accent-rgb: 124 58 237;
+}
+
+.theme-platform,
+.theme-app,
+.theme-shop {
+  --bw-theme-base: var(--bw-brand-base);
+  --bw-theme-surface: var(--bw-brand-surface);
+  --bw-theme-border: var(--bw-brand-border);
+  --bw-theme-ink: var(--bw-brand-ink);
+  --bw-theme-muted: var(--bw-brand-muted);
+  --bw-theme-primary: var(--bw-brand-accent);
+  --bw-theme-primary-rgb: var(--bw-brand-accent-rgb);
+  --bw-theme-primary-soft: rgb(var(--bw-theme-primary-rgb) / 0.05);
+  --q-primary: var(--bw-theme-primary);
+
+  --bw-theme-shadow: 0 10px 30px rgb(31 26 23 / 0.08), 0 2px 8px rgb(31 26 23 / 0.06);
+}
+
+.theme-custom {
+  --bw-theme-base: var(--bw-brand-base);
+  --bw-theme-surface: var(--bw-brand-surface);
+  --bw-theme-border: var(--bw-brand-border);
+  --bw-theme-ink: var(--bw-brand-ink);
+  --bw-theme-muted: var(--bw-brand-muted);
+  --bw-theme-primary: var(--bw-brand-accent);
+  --bw-theme-primary-rgb: var(--bw-brand-accent-rgb);
+  --bw-theme-primary-soft: rgb(var(--bw-theme-primary-rgb) / 0.06);
+  --q-primary: var(--bw-theme-primary);
+  --bw-theme-shadow: 0 10px 30px rgb(31 26 23 / 0.08), 0 2px 8px rgb(31 26 23 / 0.06);
+}
+
+/* 1. Platform Theme (Deep Imperial Amethyst) */
+.theme-platform {
+  --bw-theme-primary: #7f1d1d;
+  --bw-theme-primary-rgb: 127 29 29;
+  --bw-theme-primary-soft: rgb(127 29 29 / 0.07);
+  --bw-theme-border: #e7e1d8;
+  --bw-theme-shadow: 0 12px 30px -12px rgb(127 29 29 / 0.18);
+  --bw-theme-ink: #171412;
+  --bw-theme-muted: #746b62;
+}
+
+/* 2. App Theme (Premium Emerald) */
+.theme-app {
+  --bw-theme-primary: #047857;
+  --bw-theme-primary-rgb: 4 120 87;
+  --bw-theme-primary-soft: rgb(4 120 87 / 0.07);
+  --bw-theme-border: #e7e1d8;
+  --bw-theme-shadow: 0 12px 30px -12px rgb(4 120 87 / 0.16);
+  --bw-theme-ink: #171412;
+  --bw-theme-muted: #736a61;
+}
+
+/* 3. Shop Theme (Luxury Sapphire) */
+.theme-shop {
+  --bw-theme-primary: #1e3a8a;
+  --bw-theme-primary-rgb: 30 58 138;
+  --bw-theme-primary-soft: rgb(30 58 138 / 0.07);
+  --bw-theme-border: #e7e1d8;
+  --bw-theme-shadow: 0 12px 30px -12px rgb(30 58 138 / 0.16);
+  --bw-theme-ink: #171412;
+  --bw-theme-muted: #736a61;
+}
+
+body {
+  background: var(--bw-theme-base, var(--bw-brand-base));
+  color: var(--bw-theme-ink, var(--bw-brand-ink));
+}
+
+.q-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+.bw-page {
+  padding: clamp(1rem, 2.4vw, 2rem);
+}
+
+@media (max-width: 599px) {
+  html {
+    font-size: 14px;
+  }
+
+  .bw-page {
+    padding: 0.75rem;
+  }
+
+  .q-btn {
+    min-height: 32px;
+    padding: 0.25rem 0.65rem;
+  }
+}
+
+.bw-page__stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.bw-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.bw-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.bw-text-muted {
+  color: var(--bw-theme-muted);
+}
+
+.q-btn {
+  border-radius: 8px !important;
+}
+
+.q-editor {
+  border: 1px solid var(--bw-theme-border) !important;
+  border-radius: 8px;
+  background: var(--bw-theme-surface);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--bw-theme-border) !important;
+  }
+
+  &:focus-within {
+    border-color: var(--bw-theme-border) !important;
+    box-shadow: none !important;
+  }
+}
+
+.costing-table__rich-text-cell {
+  max-height: 120px;
+  overflow-y: auto;
+  text-align: left;
+  line-height: 1.4;
+  font-size: 0.85rem;
+  white-space: normal;
+
+  p {
+    margin: 0 0 4px 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul,
+  ol {
+    margin: 0;
+    padding-left: 16px;
+  }
+}
+
+.costing-list-page,
+.costing-details-page {
+  background: transparent;
+}
+
+.square-chip {
+  background: var(--bw-theme-primary-soft) !important;
+  color: var(--bw-theme-primary) !important;
+  border: 1px solid var(--bw-theme-border);
+  border-radius: 4px !important;
+  font-weight: 600;
+  font-size: 10px !important;
+  letter-spacing: 0.03em;
+  padding: 3px 7px !important;
+  min-height: 20px !important;
+  height: auto !important;
+  text-transform: uppercase;
+}
+
+body.barcode-scanner-active {
+  visibility: hidden;
+  background: transparent;
+}
+
+body.barcode-scanner-active .barcode-scan-overlay {
+  visibility: visible;
+}
