@@ -40,6 +40,11 @@ export default defineConfig((/* ctx */) => {
         // node: 'node22'
       },
 
+      extendViteConf(viteConf) {
+        viteConf.build = viteConf.build ?? {}
+        viteConf.build.emptyOutDir = true
+      },
+
       typescript: {
         strict: true,
         vueShim: true

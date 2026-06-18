@@ -1,86 +1,95 @@
 <template>
-  <q-page class="bw-page flex flex-center theme-app">
-    <div class="text-center full-width q-px-md" style="max-width: 500px;">
+  <q-page class="bw-page theme-app">
+    <div class="bw-page__stack">
+      <AppPageHeader
+        eyebrow="Stock"
+        title="Insert Stock"
+        subtitle="Select a shipment and box, then register new items into inventory."
+      />
+
       <!-- State 1: No shipment selected -->
-      <div v-if="!selectedShipment">
-        <div class="app-hero q-mb-lg">
-          <div class="app-hero__icon">
-            <BrandMark :size="40" />
+      <q-card v-if="!selectedShipment" class="app-card">
+        <q-card-section class="text-center q-py-xl">
+          <div class="insert-stock__icon-wrap q-mb-md">
+            <q-icon name="inventory_2" size="2.5rem" color="primary" />
           </div>
-          <h1 class="app-hero__title">Thrift Stock Manager</h1>
-          <p class="app-hero__subtitle">Select a shipment and box to start registering stock items.</p>
-        </div>
+          <div class="text-h6 text-weight-bold text-grey-9 q-mb-xs">No shipment selected</div>
+          <p class="text-body2 text-grey-7 q-mb-lg insert-stock__hint">
+            Choose a shipment and box before adding items to stock.
+          </p>
+          <q-btn
+            color="primary"
+            unelevated
+            class="q-px-xl app-cta-btn"
+            size="md"
+            icon="add"
+            label="Add Item"
+            no-caps
+            @click="openSelector"
+          />
+        </q-card-section>
+      </q-card>
 
-        <q-btn
-          color="primary"
-          unelevated
-          class="q-px-xl app-cta-btn"
-          size="lg"
-          icon="store"
-          label="Add Store"
-          no-caps
-          @click="openSelector"
-        />
-      </div>
-
-      <!-- State 2: Shipment & Box are active -->
-      <div v-else class="q-gutter-y-md">
-        <q-card class="app-card app-card--elevated dialog-card q-pa-lg text-left">
-          <q-card-section class="q-pa-none">
-            <div class="row items-center justify-between q-mb-md">
-              <span class="text-subtitle2 text-weight-bold text-primary text-uppercase tracking-wider">Active Workspace</span>
-              <q-chip icon="check_circle" color="positive" text-color="white" size="sm" dense class="q-px-sm">Ready</q-chip>
+      <!-- State 2: Shipment & box are active -->
+      <q-card v-else class="app-card app-card--elevated">
+        <q-card-section>
+          <div class="row items-center justify-between q-mb-md">
+            <div class="app-section-title q-mb-none">
+              <q-icon name="workspaces" />
+              Active workspace
             </div>
-            
-            <div class="q-mb-md">
-              <label class="text-caption text-weight-medium text-grey-6 uppercase block">Shipment</label>
-              <div class="text-h6 text-weight-bold text-grey-9">{{ selectedShipment.name }}</div>
+            <q-chip icon="check_circle" color="positive" text-color="white" size="sm" dense class="q-px-sm">
+              Ready
+            </q-chip>
+          </div>
+
+          <div class="q-mb-md">
+            <label class="text-caption text-weight-medium text-grey-6 uppercase block">Shipment</label>
+            <div class="text-subtitle1 text-weight-bold text-grey-9">{{ selectedShipment.name }}</div>
+          </div>
+
+          <div>
+            <label class="text-caption text-weight-medium text-grey-6 uppercase block">Box</label>
+            <div class="text-subtitle1 text-weight-bold text-grey-9">
+              {{ selectedBox ? selectedBox.name : 'No box selected' }}
             </div>
+          </div>
+        </q-card-section>
 
-            <div class="q-mb-lg">
-              <label class="text-caption text-weight-medium text-grey-6 uppercase block">Active Box</label>
-              <div class="text-h6 text-weight-bold text-grey-9">
-                {{ selectedBox ? selectedBox.name : 'No specific box selected' }}
-              </div>
-            </div>
-          </q-card-section>
+        <q-separator />
 
-          <q-separator class="q-my-md" />
-
-          <q-card-actions class="q-pa-none column q-gutter-y-sm">
-            <q-btn
-              color="primary"
-              unelevated
-              class="full-width app-cta-btn"
-              icon="photo_camera"
-              label="Start Registration"
-              no-caps
-              size="md"
-              @click="goToRegistration"
-            />
-            <q-btn
-              flat
-              color="grey-7"
-              class="full-width text-weight-medium"
-              icon="swap_horiz"
-              label="Change Shipment / Box"
-              no-caps
-              @click="openSelector"
-            />
-          </q-card-actions>
-        </q-card>
-      </div>
+        <q-card-actions class="q-pa-md column q-gutter-y-sm">
+          <q-btn
+            color="primary"
+            unelevated
+            class="full-width app-cta-btn"
+            icon="add"
+            label="Add Item"
+            no-caps
+            size="md"
+            @click="goToRegistration"
+          />
+          <q-btn
+            flat
+            color="grey-7"
+            class="full-width text-weight-medium"
+            icon="swap_horiz"
+            label="Change shipment / box"
+            no-caps
+            @click="openSelector"
+          />
+        </q-card-actions>
+      </q-card>
 
       <!-- Selector Dialog -->
       <q-dialog v-model="dialogOpen" persistent>
         <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-md">
-            <div class="text-h6 text-weight-bold">Select Shipment & Box</div>
+            <div class="text-h6 text-weight-bold">Select shipment & box</div>
             <q-btn flat round dense icon="close" v-close-popup />
           </q-card-section>
 
           <q-card-section class="q-pt-none q-gutter-md text-left">
-            <!-- Shipment Select -->
             <div>
               <label class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs">Shipment</label>
               <q-select
@@ -90,13 +99,12 @@
                 option-value="id"
                 outlined
                 dense
-                label="Select Shipment"
+                label="Select shipment"
                 :loading="loadingShipments"
                 @update:model-value="onShipmentChange"
               />
             </div>
 
-            <!-- Box Select -->
             <div>
               <label class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs">Box</label>
               <q-select
@@ -106,7 +114,7 @@
                 outlined
                 dense
                 clearable
-                label="Select Box (optional)"
+                label="Select box (optional)"
                 :loading="loadingBoxes"
                 :disable="!tempShipment"
               />
@@ -127,9 +135,10 @@
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancel" color="grey-7" no-caps v-close-popup />
             <q-btn
-              label="Confirm"
+              label="Add Item"
               color="primary"
               no-caps
+              icon="add"
               :disable="!tempShipment"
               @click="onConfirm"
             />
@@ -141,7 +150,7 @@
       <q-dialog v-model="createBoxDialogOpen" persistent>
         <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-sm">
-            <div class="text-h6 text-weight-bold">New Box</div>
+            <div class="text-h6 text-weight-bold">New box</div>
             <q-btn flat round dense icon="close" v-close-popup />
           </q-card-section>
 
@@ -189,7 +198,7 @@
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancel" color="grey-7" no-caps v-close-popup />
             <q-btn
-              label="Create Box"
+              label="Create box"
               color="primary"
               no-caps
               :loading="creatingBox"
@@ -210,14 +219,13 @@ import { useQuasar } from 'quasar'
 import { useThriftStore } from '../stores/thriftStore'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
-import BrandMark from '../components/BrandMark.vue'
+import AppPageHeader from '../components/AppPageHeader.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 const thriftStore = useThriftStore()
 const authStore = useAuthStore()
 
-// State
 const dialogOpen = ref(false)
 const createBoxDialogOpen = ref(false)
 const loadingShipments = ref(false)
@@ -236,12 +244,10 @@ const newBoxForm = ref({
   received_weight: null as number | null,
 })
 
-// Computed
 const selectedShipment = computed(() => thriftStore.selectedShipment)
 const selectedBox = computed(() => thriftStore.selectedBox)
 const tenantId = computed(() => authStore.tenantId)
 
-// Methods
 const openSelector = async () => {
   tempShipment.value = selectedShipment.value
   tempBox.value = selectedBox.value
@@ -360,7 +366,19 @@ const goToRegistration = () => {
   width: 100%;
   max-width: 450px;
 }
-.tracking-wider {
-  letter-spacing: 0.08em;
+
+.insert-stock__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1rem;
+  background: rgb(var(--bw-theme-primary-rgb) / 0.1);
+}
+
+.insert-stock__hint {
+  max-width: 18rem;
+  margin-inline: auto;
 }
 </style>

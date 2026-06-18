@@ -21,6 +21,9 @@
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
     "sync": "cd src-capacitor && npx cap sync android",
+    "clean:android": "node scripts/clean-android-build.mjs",
+    "build:android": "node scripts/clean-android-build.mjs && quasar build -m capacitor -T android",
+    "build:android:debug": "node scripts/clean-android-build.mjs && quasar build -m capacitor -T android -d",
     "generate:icons": "node scripts/generate-app-icon.mjs",
     "postinstall": "quasar prepare --silent"
   },

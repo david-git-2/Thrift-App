@@ -6,6 +6,11 @@ import { useTenantStore } from '../stores/tenantStore'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
 
+export const THRIFT_TENANT_SLUG = 'thrift'
+
+const normalizeTenantSlug = (value: string | null | undefined) =>
+  value?.trim().toLowerCase() || null
+
 export function useOAuthLogin() {
   const route = useRoute()
   const router = useRouter()
@@ -13,18 +18,24 @@ export function useOAuthLogin() {
   const tenantStore = useTenantStore()
   const isLoading = ref(false)
 
+  const sendBackToLogin = async (loginError: string) => {
+    authStore.clearAccess()
+    await supabase.auth.signOut()
+    await router.replace({ path: '/login', query: { error: loginError } })
+  }
+
   // 1. Google OAuth
-  const handleGoogleLogin = async (tenantSlug: string = 'thrift') => {
+  const handleGoogleLogin = async () => {
     isLoading.value = true
     const callbackSearchParams = new URLSearchParams({
       scope: 'app',
-      tenant_slug: tenantSlug,
+      tenant_slug: THRIFT_TENANT_SLUG,
     })
     
     let redirectTo = `${window.location.origin}/#/auth/callback?${callbackSearchParams.toString()}`
     
     if (Capacitor.isNativePlatform()) {
-      redirectTo = `https://tradeflowbd.pages.dev/auth/callback?scope=app&tenant_slug=${tenantSlug}&app_redirect=thrift`
+      redirectTo = `https://tradeflowbd.pages.dev/auth/callback?scope=app&tenant_slug=${THRIFT_TENANT_SLUG}&app_redirect=thrift`
     }
 
     try {
@@ -122,7 +133,6 @@ export function useOAuthLogin() {
   // Shared Session Bootstrapper
   const bootstrapUserSession = async (userEmail: string, session: any) => {
     const formattedEmail = userEmail.trim().toLowerCase()
-    const tenantSlug = (route.query.tenant_slug as string | undefined) ?? 'thrift'
 
     // 1. Check membership
     const { data: membershipData, error: membershipError } = await supabase.rpc('check_login_membership', {
@@ -132,12 +142,19 @@ export function useOAuthLogin() {
 
     if (membershipError) {
       console.error('Membership check failed', membershipError)
-      throw new Error('Failed to verify membership details.')
+      await sendBackToLogin('membership_failed')
+      return false
     }
 
     const result = Array.isArray(membershipData) ? membershipData[0] : membershipData
-    if (!result?.has_match || !result.member_id) {
-      throw new Error('This account does not have permission for this workspace.')
+    if (
+      !result?.has_match ||
+      result.member_id === null ||
+      !result.member_email ||
+      !result.matched_role
+    ) {
+      await sendBackToLogin('no_membership')
+      return false
     }
 
     // 2. Resolve tenants by membership
@@ -149,20 +166,26 @@ export function useOAuthLogin() {
 
     if (tenantsError) {
       console.error('Fetching tenants failed', tenantsError)
-      throw new Error('Failed to load workspace tenants.')
+      await sendBackToLogin('membership_failed')
+      return false
     }
 
     const availableTenants = (tenantsData as any[]) ?? []
+    if (availableTenants.length === 0) {
+      await sendBackToLogin('no_membership')
+      return false
+    }
+
     tenantStore.setAvailableAdminTenants(availableTenants)
 
-    // Always look for 'thrift' first, otherwise fall back to route query or first available
-    let targetTenant = availableTenants.find((t) => t.slug === 'thrift')
+    const targetTenant =
+      availableTenants.find(
+        (tenant) => normalizeTenantSlug(tenant.slug) === THRIFT_TENANT_SLUG,
+      ) ?? null
+
     if (!targetTenant) {
-      targetTenant = availableTenants.find((t) => t.slug === tenantSlug) ?? availableTenants[0]
-    }
-    
-    if (!targetTenant) {
-      throw new Error('No active thrift workspace found for this account.')
+      await sendBackToLogin('invalid_tenant')
+      return false
     }
 
     // 3. Bootstrap app context
@@ -174,12 +197,26 @@ export function useOAuthLogin() {
 
     if (bootstrapError) {
       console.error('Bootstrap fetch failed', bootstrapError)
-      throw new Error('Failed to bootstrap app settings.')
+      await sendBackToLogin('membership_failed')
+      return false
     }
 
     const bootstrap = Array.isArray(bootstrapData) ? bootstrapData[0] : bootstrapData
-    if (!bootstrap || !bootstrap.member_role) {
-      throw new Error('No roles assigned for this tenant workspace.')
+    if (
+      !bootstrap ||
+      bootstrap.member_id === null ||
+      bootstrap.tenant_id === null ||
+      !bootstrap.tenant_name ||
+      !bootstrap.tenant_slug ||
+      !bootstrap.member_role
+    ) {
+      await sendBackToLogin('no_membership')
+      return false
+    }
+
+    if (normalizeTenantSlug(bootstrap.tenant_slug) !== THRIFT_TENANT_SLUG) {
+      await sendBackToLogin('invalid_tenant')
+      return false
     }
 
     // 4. Save access snapshot
@@ -195,21 +232,21 @@ export function useOAuthLogin() {
       },
       member: {
         id: bootstrap.member_id,
-        email: formattedEmail,
+        email: bootstrap.member_email?.trim().toLowerCase() ?? formattedEmail,
         role: bootstrap.member_role,
         actorType: 'membership',
         name: null,
-        tenantId: targetTenant.id,
+        tenantId: bootstrap.tenant_id,
         customerGroupId: null,
         isActive: Boolean(bootstrap.member_is_active),
         createdAt: null,
         updatedAt: null,
       },
       tenant: {
-        id: targetTenant.id,
-        name: targetTenant.name,
-        slug: targetTenant.slug,
-        isActive: Boolean(targetTenant.is_active),
+        id: bootstrap.tenant_id,
+        name: bootstrap.tenant_name,
+        slug: bootstrap.tenant_slug,
+        isActive: Boolean(bootstrap.tenant_is_active),
       },
       customerGroup: null,
       activeModuleKeys: bootstrap.active_module_keys ?? [],
@@ -248,7 +285,8 @@ export function useOAuthLogin() {
 
       return await bootstrapUserSession(session.user.email ?? '', session)
     } catch (err: any) {
-      await router.replace(`/login?error=auth_failed`)
+      console.error('Login processing failed', err)
+      await sendBackToLogin('auth_failed')
       return false
     }
   }

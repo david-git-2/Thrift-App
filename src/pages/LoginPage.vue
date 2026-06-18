@@ -240,10 +240,10 @@ const errorMessage = computed(() => {
 
   const err = route.query.error
   if (err === 'no_membership') {
-    return 'This Google account does not have permission for this workspace.'
+    return 'This account does not have permission for the Thrift workspace.'
   }
-  if (err === 'no_tenant') {
-    return 'This account does not belong to the thrift tenant workspace.'
+  if (err === 'invalid_tenant' || err === 'no_tenant') {
+    return 'This account is not allowed for the Thrift tenant workspace.'
   }
   if (err === 'membership_failed') {
     return 'Failed to verify membership details. Please try again.'
@@ -255,8 +255,7 @@ const errorMessage = computed(() => {
 })
 
 const onGoogleLogin = () => {
-  // Fixed tenant slug is 'thrift' as requested
-  handleGoogleLogin('thrift')
+  handleGoogleLogin()
 }
 
 const toggleMode = () => {

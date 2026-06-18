@@ -86,7 +86,23 @@ Whenever you make frontend changes in the `src/` directory or install new Capaci
 
 ### 3. How to Build the App (APK / AAB)
 
-To generate a debug or release build (`.apk` or `.aab`) of the Android application:
+**Use a clean release build for sideloading** — it installs faster and avoids stale web assets piling up in the APK.
+
+```bash
+npm run build:android
+```
+
+This clears old Capacitor web assets, rebuilds the UI, and produces a **release** APK (smaller than debug, arm-only native libs).
+
+For a debug APK while developing:
+
+```bash
+npm run build:android:debug
+```
+
+**Why installs felt slow:** debug APKs are larger, ML Kit ships native scanner libraries, and repeated builds were leaving **old JS/CSS bundles** inside the APK (~5MB extra). `npm run clean:android` fixes the stale assets issue.
+
+Legacy step-by-step:
 
 1.  **Compile the Web Assets:**
     ```bash
