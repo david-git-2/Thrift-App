@@ -1,29 +1,30 @@
 <template>
-  <q-page class="bw-page bg-grey-1 theme-app">
+  <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
-      <!-- Header -->
-      <div class="text-center q-my-sm">
-        <h1 class="text-h5 text-weight-bold text-grey-9 q-my-none">Scan Lookup</h1>
-        <p class="text-caption text-grey-6 q-my-none">Scan any stock barcode to view its details instantly.</p>
-      </div>
+      <AppPageHeader
+        eyebrow="Lookup"
+        title="Scan Barcode"
+        subtitle="Scan any stock barcode to view its details instantly."
+      />
 
       <!-- Action Panel (Start Scan or Input) -->
-      <div class="row q-col-gutter-md">
-        <div class="col-12 text-center q-gutter-y-sm">
+      <q-card class="app-card q-pa-md">
+        <div class="text-center q-gutter-y-sm">
           <q-btn
             color="primary"
+            unelevated
             icon="qr_code_scanner"
             label="Scan Barcode"
             size="lg"
-            class="full-width q-py-md text-weight-bold"
+            class="full-width app-cta-btn app-cta-btn--scan"
             no-caps
             @click="startScan"
           />
 
           <div class="row items-center q-my-sm">
-            <div class="col bg-grey-4" style="height: 1px;"></div>
-            <div class="col-auto q-px-sm text-caption text-grey-5 text-weight-bold text-uppercase">OR ENTER MANUALLY</div>
-            <div class="col bg-grey-4" style="height: 1px;"></div>
+            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);"></div>
+            <div class="col-auto q-px-sm text-caption text-grey-6 text-weight-bold text-uppercase">or enter manually</div>
+            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);"></div>
           </div>
 
           <div class="row q-col-gutter-xs">
@@ -47,16 +48,14 @@
             </div>
           </div>
         </div>
-      </div>
+      </q-card>
 
       <!-- Loading State -->
-      <div v-if="searching" class="flex flex-center q-py-xl">
-        <q-spinner-dots size="40px" color="primary" />
-      </div>
+      <PageInitialLoader v-if="searching" compact message="Looking up barcode..." />
 
       <!-- Lookup Result Card -->
       <div v-else-if="scannedItem" class="q-mt-md">
-        <q-card class="shadow-1 rounded-borders overflow-hidden">
+        <q-card class="app-card app-card--elevated overflow-hidden">
           <!-- Card Header / Title -->
           <q-card-section class="bg-primary text-white q-py-md">
             <div class="row items-center justify-between">
@@ -196,11 +195,13 @@
       </div>
 
       <!-- No Item Found State -->
-      <div v-else-if="searchedBarcode" class="text-center q-py-xl bg-white rounded-borders shadow-1 border-dashed-grey q-px-md">
-        <q-icon name="warning" size="4rem" color="warning" class="q-mb-md" />
-        <div class="text-h6 text-grey-7 text-weight-medium">Item Not Found</div>
-        <p class="text-caption text-grey-6">
-          No stock registered under the barcode: <strong class="text-grey-9">{{ searchedBarcode }}</strong>.
+      <div v-else-if="searchedBarcode" class="app-empty-state">
+        <div class="app-empty-state__icon" style="background: rgb(245 158 11 / 0.12); color: #d97706;">
+          <q-icon name="warning" size="2rem" />
+        </div>
+        <div class="text-h6 text-weight-bold text-grey-8">Item not found</div>
+        <p class="text-caption text-grey-6 q-mt-xs">
+          No stock registered under barcode <strong class="text-grey-9">{{ searchedBarcode }}</strong>.
         </p>
         <div class="q-mt-md row justify-center q-gutter-sm">
           <q-btn
@@ -276,6 +277,8 @@ import { useAuthStore } from '../stores/authStore'
 import { useThriftStore } from '../stores/thriftStore'
 import { Capacitor } from '@capacitor/core'
 import { useBarcodeScan } from '../composables/useBarcodeScan'
+import PageInitialLoader from '../components/PageInitialLoader.vue'
+import AppPageHeader from '../components/AppPageHeader.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -472,10 +475,6 @@ const getBadgeColor = (colorName: string) => {
 </script>
 
 <style scoped>
-.border-dashed-grey {
-  border: 2px dashed #e2e8f0;
-}
-
 .border-bottom-light {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }

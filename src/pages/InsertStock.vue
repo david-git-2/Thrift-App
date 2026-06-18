@@ -1,17 +1,20 @@
 <template>
-  <q-page class="bw-page bg-grey-1 flex flex-center theme-app">
+  <q-page class="bw-page flex flex-center theme-app">
     <div class="text-center full-width q-px-md" style="max-width: 500px;">
       <!-- State 1: No shipment selected -->
       <div v-if="!selectedShipment">
-        <div class="q-mb-xl">
-          <q-icon name="storefront" size="80px" color="primary" class="q-mb-md opacity-80" />
-          <h1 class="text-h4 text-weight-bold text-grey-9 q-my-none">Thrift Stock Manager</h1>
-          <p class="text-subtitle1 text-grey-6 q-mt-sm">Select shipment & box to start registering stock items.</p>
+        <div class="app-hero q-mb-lg">
+          <div class="app-hero__icon">
+            <BrandMark :size="40" />
+          </div>
+          <h1 class="app-hero__title">Thrift Stock Manager</h1>
+          <p class="app-hero__subtitle">Select a shipment and box to start registering stock items.</p>
         </div>
 
         <q-btn
           color="primary"
-          class="q-px-xl q-py-md text-weight-bold large-store-btn shadow-2"
+          unelevated
+          class="q-px-xl app-cta-btn"
           size="lg"
           icon="store"
           label="Add Store"
@@ -22,7 +25,7 @@
 
       <!-- State 2: Shipment & Box are active -->
       <div v-else class="q-gutter-y-md">
-        <q-card class="dialog-card shadow-3 q-pa-lg text-left">
+        <q-card class="app-card app-card--elevated dialog-card q-pa-lg text-left">
           <q-card-section class="q-pa-none">
             <div class="row items-center justify-between q-mb-md">
               <span class="text-subtitle2 text-weight-bold text-primary text-uppercase tracking-wider">Active Workspace</span>
@@ -47,7 +50,8 @@
           <q-card-actions class="q-pa-none column q-gutter-y-sm">
             <q-btn
               color="primary"
-              class="full-width text-weight-bold q-py-sm"
+              unelevated
+              class="full-width app-cta-btn"
               icon="photo_camera"
               label="Start Registration"
               no-caps
@@ -69,7 +73,7 @@
 
       <!-- Selector Dialog -->
       <q-dialog v-model="dialogOpen" persistent>
-        <q-card class="dialog-card">
+        <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-md">
             <div class="text-h6 text-weight-bold">Select Shipment & Box</div>
             <q-btn flat round dense icon="close" v-close-popup />
@@ -135,7 +139,7 @@
 
       <!-- Create Box Dialog -->
       <q-dialog v-model="createBoxDialogOpen" persistent>
-        <q-card class="dialog-card">
+        <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-sm">
             <div class="text-h6 text-weight-bold">New Box</div>
             <q-btn flat round dense icon="close" v-close-popup />
@@ -206,6 +210,7 @@ import { useQuasar } from 'quasar'
 import { useThriftStore } from '../stores/thriftStore'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
+import BrandMark from '../components/BrandMark.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -351,19 +356,11 @@ const goToRegistration = () => {
 </script>
 
 <style scoped>
-.large-store-btn {
-  border-radius: 16px !important;
-  font-size: 1.25rem;
-}
 .dialog-card {
   width: 100%;
   max-width: 450px;
-  border-radius: 14px;
 }
 .tracking-wider {
   letter-spacing: 0.08em;
-}
-.opacity-80 {
-  opacity: 0.8;
 }
 </style>

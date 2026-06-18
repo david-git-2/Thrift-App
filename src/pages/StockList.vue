@@ -1,24 +1,27 @@
 <template>
-  <q-page class="bw-page bg-grey-1 theme-app">
+  <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
-      <!-- Header Area -->
-      <div class="row items-center justify-between q-mb-xs">
-        <div>
-          <h1 class="text-h5 text-weight-bold text-grey-9 q-my-none">Thrift Stock</h1>
-          <p class="text-caption text-grey-6 q-my-none">Browse, search, and manage registered stock items.</p>
-        </div>
-        <q-btn
-          color="primary"
-          icon="add"
-          label="Add Stock"
-          no-caps
-          to="/insert-stock"
-          class="shadow-1"
-        />
-      </div>
+      <AppPageHeader
+        eyebrow="Inventory"
+        title="Thrift Stock"
+        subtitle="Browse, search, and manage registered stock items."
+      >
+        <template #action>
+          <q-btn
+            color="primary"
+            unelevated
+            icon="add"
+            label="Add"
+            no-caps
+            to="/insert-stock"
+            class="app-cta-btn"
+            style="min-height: 40px !important; font-size: 0.9rem !important;"
+          />
+        </template>
+      </AppPageHeader>
 
       <!-- Search and Filter Bar -->
-      <q-card class="shadow-1 rounded-borders">
+      <q-card class="app-card app-filter-panel">
         <q-card-section class="q-pa-sm">
           <div class="row q-col-gutter-sm">
             <!-- Search Input -->
@@ -72,14 +75,14 @@
 
       <!-- Main List Container with Pull to Refresh -->
       <q-pull-to-refresh @refresh="onRefresh" color="primary">
-        <div v-if="loading && stocks.length === 0" class="flex flex-center q-py-xl">
-          <q-spinner-dots size="40px" color="primary" />
-        </div>
+        <PageInitialLoader v-if="loading && stocks.length === 0" />
 
-        <div v-else-if="stocks.length === 0" class="text-center q-py-xl bg-white rounded-borders shadow-1 border-dashed-grey q-px-md">
-          <q-icon name="inventory_2" size="4rem" color="grey-4" class="q-mb-md" />
-          <div class="text-h6 text-grey-7 text-weight-medium">No Stock Items Found</div>
-          <p class="text-caption text-grey-5 q-mb-md">No items match your filters, or you haven't registered any stock yet.</p>
+        <div v-else-if="stocks.length === 0" class="app-empty-state">
+          <div class="app-empty-state__icon">
+            <q-icon name="inventory_2" size="2rem" />
+          </div>
+          <div class="text-h6 text-weight-bold text-grey-8">No stock items found</div>
+          <p class="text-caption text-grey-6 q-mb-md q-mt-xs">No items match your filters, or you haven't registered any stock yet.</p>
           <q-btn
             color="primary"
             outline
@@ -90,15 +93,17 @@
         </div>
 
         <div v-else class="q-gutter-y-sm">
+          <PageInitialLoader v-if="loading" compact />
+          <template v-else>
           <!-- Mobile friendly stock cards -->
           <q-card
             v-for="item in stocks"
             :key="item.id"
-            class="shadow-1 rounded-borders stock-card overflow-hidden"
+            class="app-card app-stock-card overflow-hidden"
           >
             <div class="row no-wrap items-stretch">
               <!-- Item Image Thumbnail -->
-              <div class="col-4 flex flex-center bg-grey-2 relative-position">
+              <div class="col-4 flex flex-center app-stock-card__media relative-position">
                 <q-img
                   v-if="item.image_url"
                   :src="item.image_url"
@@ -195,6 +200,7 @@
           <div v-if="meta.total > 0" class="text-center text-caption text-grey-6 q-pb-md">
             Page {{ meta.page }} of {{ meta.total_pages }} · {{ meta.total }} items
           </div>
+          </template>
         </div>
       </q-pull-to-refresh>
     </div>
@@ -209,6 +215,8 @@ import {
   fetchThriftStocksPaginated,
   type ThriftStockListMeta,
 } from '../composables/useThriftStockList'
+import PageInitialLoader from '../components/PageInitialLoader.vue'
+import AppPageHeader from '../components/AppPageHeader.vue'
 
 const $q = useQuasar()
 const authStore = useAuthStore()
@@ -355,21 +363,8 @@ const getBadgeColor = (colorName: string) => {
 </script>
 
 <style scoped>
-.stock-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stock-card:active {
-  transform: scale(0.98);
-}
-
 .fill-image {
   object-fit: cover;
-}
-
-.border-dashed-grey {
-  border: 2px dashed #e2e8f0;
 }
 
 .border-top-dashed {

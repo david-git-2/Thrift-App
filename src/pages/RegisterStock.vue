@@ -1,8 +1,8 @@
 <template>
-  <q-page class="bw-page bg-grey-1 theme-app">
+  <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
       <!-- Active Shipment & Box context banner -->
-      <q-banner dense class="bg-primary text-white rounded-borders shadow-1 q-py-sm">
+      <q-banner dense class="app-context-banner text-white q-py-sm">
         <template v-slot:avatar>
           <q-icon name="workspaces" color="white" />
         </template>
@@ -33,15 +33,15 @@
         <!-- LEFT COLUMN: Capture Barcode & Image -->
         <div class="col-12 col-md-5 q-gutter-y-md">
           <!-- Capture Barcode Card -->
-          <q-card class="shadow-1">
+          <q-card class="app-card">
             <q-card-section>
-              <div class="text-subtitle1 text-weight-bold text-grey-9 q-mb-md row items-center">
-                <q-icon name="qr_code" color="primary" class="q-mr-sm" size="xs" />
+              <div class="app-section-title">
+                <q-icon name="qr_code" />
                 Barcode Identification
               </div>
 
               <!-- Barcode Display / Scan Button -->
-              <div v-if="tempBarcode" class="bg-grey-2 q-pa-md rounded-borders text-center relative-position border-dashed">
+              <div v-if="tempBarcode" class="app-capture-zone q-pa-md text-center relative-position">
                 <div class="text-h6 text-weight-medium text-grey-9 letter-space-wide q-py-xs">
                   {{ tempBarcode }}
                 </div>
@@ -69,16 +69,17 @@
               </div>
 
               <div v-else-if="barcodeChecking" class="text-center q-py-md">
-                <q-spinner-dots size="32px" color="primary" />
-                <div class="text-caption text-grey-6 q-mt-sm">Checking barcode...</div>
+                <PageInitialLoader compact message="Checking barcode..." />
               </div>
 
               <div v-else class="text-center q-py-md">
                 <q-btn
                   color="primary"
+                  unelevated
                   icon="qr_code_scanner"
                   label="Scan Barcode"
-                  class="q-px-lg text-weight-bold"
+                  class="q-px-lg app-cta-btn"
+                  style="min-height: 44px !important; box-shadow: none;"
                   no-caps
                   @click="startBarcodeScan"
                 />
@@ -88,15 +89,15 @@
           </q-card>
 
           <!-- Capture Image Card -->
-          <q-card class="shadow-1">
+          <q-card class="app-card">
             <q-card-section>
-              <div class="text-subtitle1 text-weight-bold text-grey-9 q-mb-md row items-center">
-                <q-icon name="photo_camera" color="primary" class="q-mr-sm" size="xs" />
+              <div class="app-section-title">
+                <q-icon name="photo_camera" />
                 Product Image
               </div>
 
               <!-- Image Display / Capture Button -->
-              <div v-if="previewImageUrl" class="text-center bg-grey-2 q-pa-sm rounded-borders relative-position border-dashed">
+              <div v-if="previewImageUrl" class="app-capture-zone q-pa-sm text-center relative-position">
                 <q-img
                   :src="previewImageUrl"
                   class="rounded-borders uploaded-preview"
@@ -124,9 +125,11 @@
               <div v-else class="text-center q-py-lg">
                 <q-btn
                   color="primary"
+                  unelevated
                   icon="camera_alt"
                   label="Take Photo"
-                  class="q-px-lg text-weight-bold"
+                  class="q-px-lg app-cta-btn"
+                  style="min-height: 44px !important; box-shadow: none;"
                   no-caps
                   @click="startCameraCapture"
                 />
@@ -138,10 +141,10 @@
 
         <!-- RIGHT COLUMN: Stock Attributes Form -->
         <div class="col-12 col-md-7">
-          <q-card class="shadow-1">
+          <q-card class="app-card">
             <q-card-section class="q-pb-none">
-              <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
-                <q-icon name="style" color="primary" class="q-mr-sm" size="xs" />
+              <div class="app-section-title">
+                <q-icon name="style" />
                 Product Attributes
               </div>
             </q-card-section>
@@ -430,6 +433,12 @@
         </q-card>
       </q-dialog>
     </div>
+
+    <PageInitialLoader
+      v-if="submitting"
+      overlay
+      message="Uploading image and saving stock..."
+    />
   </q-page>
 </template>
 
@@ -451,6 +460,7 @@ import {
   validateBarcodeForRegistration,
   type BarcodeAvailability,
 } from '../composables/useThriftBarcode'
+import PageInitialLoader from '../components/PageInitialLoader.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -748,7 +758,6 @@ const submitStock = async () => {
   }
 
   submitting.value = true
-  $q.loading.show({ message: 'Uploading image and saving stock...' })
 
   try {
     const imgName = `stock_${tempBarcode.value}.jpg`
@@ -806,20 +815,14 @@ const submitStock = async () => {
     })
   } finally {
     submitting.value = false
-    $q.loading.hide()
   }
 }
 </script>
 
 <style scoped>
 .uploaded-preview {
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-.border-dashed {
-  border: 2px dashed rgba(4, 120, 87, 0.25);
-  border-radius: 8px;
-  background: rgba(247, 249, 252, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgb(var(--bw-theme-primary-rgb) / 0.1);
 }
 .letter-space-wide {
   letter-spacing: 0.1em;

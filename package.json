@@ -21,6 +21,7 @@
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
     "sync": "cd src-capacitor && npx cap sync android",
+    "generate:icons": "node scripts/generate-app-icon.mjs",
     "postinstall": "quasar prepare --silent"
   },
   "dependencies": {
@@ -43,6 +44,7 @@
     "oxfmt": "^0.x",
     "oxlint": "^1.x",
     "oxlint-tsgolint": "^0.x",
+    "sharp": "^0.35.1",
     "typescript": "^6.0.0",
     "vue-tsc": "^3.3.3"
   },

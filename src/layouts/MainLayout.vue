@@ -1,16 +1,19 @@
 <template>
   <q-layout view="hHh lpR fFf" class="theme-app">
     <!-- Header -->
-    <q-header elevated class="bg-primary text-white">
+    <q-header class="app-header text-white">
       <q-toolbar>
-        <q-toolbar-title class="text-weight-bold">
-          Thrift App
-          <span v-if="tenantName" class="text-subtitle2 text-weight-regular text-amber-3 q-ml-sm">
-            ({{ tenantName }})
-          </span>
-        </q-toolbar-title>
+        <div class="app-header__brand">
+          <div class="app-header__logo-wrap">
+            <BrandMark :size="22" use-current-color />
+          </div>
+          <q-toolbar-title class="q-pl-none">
+            <div class="app-header__title">Thrift App</div>
+            <div v-if="tenantName" class="app-header__tenant">{{ tenantName }}</div>
+          </q-toolbar-title>
+        </div>
 
-        <div v-if="userEmail" class="row items-center q-gutter-sm">
+        <div v-if="userEmail" class="row items-center q-gutter-xs app-header__user">
           <q-avatar size="28px" v-if="avatarUrl">
             <img :src="avatarUrl" />
           </q-avatar>
@@ -28,12 +31,12 @@
     </q-page-container>
 
     <!-- Bottom Navigation Tabs (Perfect for Android App Layout) -->
-    <q-footer class="bg-white text-grey-8" bordered>
+    <q-footer class="app-tabbar text-grey-8">
       <q-tabs
         v-model="activeTab"
-        indicator-color="primary"
+        indicator-color="transparent"
         active-color="primary"
-        class="text-grey-7"
+        class="text-grey-6"
         align="justify"
       >
         <q-route-tab
@@ -70,6 +73,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
 import BarcodeScanOverlay from '../components/BarcodeScanOverlay.vue'
+import BrandMark from '../components/BrandMark.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -87,9 +91,3 @@ const onLogout = async () => {
 }
 </script>
 
-<style scoped>
-/* Bottom navigation overrides */
-.q-footer {
-  border-top: 1px solid #e0e0e0;
-}
-</style>

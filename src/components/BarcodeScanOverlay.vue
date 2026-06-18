@@ -11,7 +11,8 @@
         color="white"
         text-color="primary"
         label="Cancel"
-        class="full-width text-weight-bold"
+        class="full-width text-weight-bold app-cta-btn"
+        style="min-height: 48px !important; box-shadow: none;"
         no-caps
         @click="onCancel"
       />

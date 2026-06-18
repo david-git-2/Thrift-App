@@ -2,8 +2,7 @@
   <div class="callback-stage">
     <div class="callback-card">
       <template v-if="isRedirectingToApp">
-        <q-spinner-tail color="primary" size="48px" />
-        <div class="text-h6 q-mt-md text-weight-bold">Opening Thrift App...</div>
+        <PageInitialLoader compact message="Opening Thrift App..." />
         <div class="text-subtitle2 text-grey-6 q-mt-sm">
           You are being redirected back to the Thrift application.
         </div>
@@ -24,11 +23,7 @@
       </template>
       
       <template v-else>
-        <q-spinner-tail color="primary" size="48px" />
-        <div class="text-h6 q-mt-md text-weight-bold">Finishing sign-in</div>
-        <div class="text-subtitle2 text-grey-6 q-mt-sm">
-          Verifying your access credentials and loading the thrift workspace...
-        </div>
+        <PageInitialLoader compact message="Verifying your access credentials and loading the thrift workspace..." />
       </template>
     </div>
   </div>
@@ -38,6 +33,7 @@
 import { onMounted, ref } from 'vue'
 import { useOAuthLogin } from '../composables/useOAuthLogin'
 import { supabase } from '../boot/supabase'
+import PageInitialLoader from '../components/PageInitialLoader.vue'
 import { Capacitor } from '@capacitor/core'
 
 const { processLoginResult } = useOAuthLogin()

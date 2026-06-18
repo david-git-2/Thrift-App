@@ -17,13 +17,7 @@
             <!-- Brand wordmark — top left -->
             <div class="auth-canvas__brand">
               <div class="auth-canvas__brand-mark" aria-hidden="true">
-                <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="28" height="28" rx="7" fill="currentColor" fill-opacity="0.2"/>
-                  <path d="M7 9.5C7 8.12 8.12 7 9.5 7H14V14H7V9.5Z" fill="currentColor"/>
-                  <path d="M14 7H18.5C19.88 7 21 8.12 21 9.5V14H14V7Z" fill="currentColor" fill-opacity="0.7"/>
-                  <path d="M7 14H14V21H9.5C8.12 21 7 19.88 7 18.5V14Z" fill="currentColor" fill-opacity="0.7"/>
-                  <path d="M14 14H21V18.5C21 19.88 19.88 21 18.5 21H14V14Z" fill="currentColor" fill-opacity="0.45"/>
-                </svg>
+                <BrandMark :size="24" use-current-color />
               </div>
               <span class="auth-canvas__brand-name">TradeFlowBD</span>
             </div>
@@ -220,6 +214,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useOAuthLogin } from '../composables/useOAuthLogin'
+import BrandMark from '../components/BrandMark.vue'
 
 const route = useRoute()
 const {
