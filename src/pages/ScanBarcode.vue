@@ -277,6 +277,8 @@ import { useAuthStore } from '../stores/authStore'
 import { useThriftStore } from '../stores/thriftStore'
 import { Capacitor } from '@capacitor/core'
 import { useBarcodeScan } from '../composables/useBarcodeScan'
+import { normalizeScannedBarcode } from '../utils/normalizeScannedBarcode'
+import { buildBarcodeCandidates } from '../utils/barcodeCandidates'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 import AppPageHeader from '../components/AppPageHeader.vue'
 
@@ -330,12 +332,46 @@ const lookupBarcode = async (barcodeVal: string) => {
 
   if (!barcodeVal.trim()) return
 
-  const barcode = barcodeVal.trim()
+  const normalized = normalizeScannedBarcode(barcodeVal)
+  if (!normalized) return
+
   searching.value = true
   scannedItem.value = null
-  searchedBarcode.value = barcode
+  searchedBarcode.value = normalized
 
   try {
+    let lookupBarcode = normalized
+
+    try {
+      const { data: resolved, error: resolveError } = await supabase.rpc('resolve_thrift_barcode', {
+        p_tenant_id: tenantId,
+        p_scanned_value: normalized,
+      })
+      if (resolveError) throw resolveError
+
+      const match = Array.isArray(resolved) ? resolved[0] : null
+      if (match?.barcode_id) {
+        lookupBarcode = match.barcode_id
+        searchedBarcode.value = lookupBarcode
+      }
+    } catch (resolveErr) {
+      console.warn('resolve_thrift_barcode failed, using direct lookup:', resolveErr)
+      for (const candidate of buildBarcodeCandidates(tenantId, normalized)) {
+        const { data, error } = await supabase
+          .from('thrift_barcodes')
+          .select('barcode_id')
+          .eq('tenant_id', tenantId)
+          .eq('barcode_id', candidate)
+          .maybeSingle()
+        if (error) throw error
+        if (data?.barcode_id) {
+          lookupBarcode = data.barcode_id
+          searchedBarcode.value = lookupBarcode
+          break
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from('thrift_stocks')
       .select(`
@@ -371,7 +407,7 @@ const lookupBarcode = async (barcodeVal: string) => {
         )
       `)
       .eq('tenant_id', tenantId)
-      .eq('barcode', barcode)
+      .eq('barcode', lookupBarcode)
       .maybeSingle()
 
     if (error) throw error

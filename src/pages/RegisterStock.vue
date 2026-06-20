@@ -460,6 +460,12 @@ import {
   validateBarcodeForRegistration,
   type BarcodeAvailability,
 } from '../composables/useThriftBarcode'
+import {
+  fetchThriftCategories,
+  fetchThriftDefaultPurchasePriceGbp,
+  fetchThriftShelves,
+  fetchThriftTypes,
+} from '../composables/useThriftCatalog'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 
 const router = useRouter()
@@ -533,13 +539,19 @@ const barcodeStatusLabel = computed(() => {
 
 // Lifecycle Hooks
 onMounted(async () => {
-  // Check context exists
   if (!selectedShipment.value) {
     $q.notify({
       type: 'warning',
       message: 'Please select active Shipment & Box first'
     })
     router.replace('/insert-stock')
+    return
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !sessionData.session) {
+    $q.notify({ type: 'negative', message: 'Session expired. Please log in again.' })
+    router.replace('/login')
     return
   }
 
@@ -560,22 +572,19 @@ const loadDropdowns = async () => {
   if (!tenantId.value) return
   loadingMeta.value = true
   try {
-    const [catsRes, typesRes, shelvesRes] = await Promise.all([
-      supabase.from('thrift_categories').select('id, name').eq('tenant_id', tenantId.value).order('name'),
-      supabase.from('thrift_types').select('id, name').eq('tenant_id', tenantId.value).order('name'),
-      supabase.from('thrift_shelves').select('id, shelf_code').eq('tenant_id', tenantId.value).order('shelf_code')
+    const [categories, types, shelves] = await Promise.all([
+      fetchThriftCategories(tenantId.value),
+      fetchThriftTypes(tenantId.value),
+      fetchThriftShelves(tenantId.value),
     ])
 
-    if (catsRes.error) throw catsRes.error
-    if (typesRes.error) throw typesRes.error
-    if (shelvesRes.error) throw shelvesRes.error
-
-    categoryOptions.value = catsRes.data || []
-    typeOptions.value = typesRes.data || []
-    shelfOptions.value = shelvesRes.data || []
+    categoryOptions.value = categories
+    typeOptions.value = types
+    shelfOptions.value = shelves
   } catch (err) {
     console.error('Error fetching dropdown choices:', err)
-    $q.notify({ type: 'negative', message: 'Failed to load options' })
+    const detail = err instanceof Error ? err.message : 'Unknown error'
+    $q.notify({ type: 'negative', message: `Failed to load options: ${detail}` })
   } finally {
     loadingMeta.value = false
   }
@@ -584,19 +593,9 @@ const loadDropdowns = async () => {
 const loadTenantSettings = async () => {
   if (!tenantId.value) return
   try {
-    const { data, error } = await supabase
-      .from('thrift_stock_settings')
-      .select('*')
-      .eq('tenant_id', tenantId.value)
-      .maybeSingle()
-
-    if (error) throw error
-    if (data) {
-      if (data.default_category_id) form.value.category_id = data.default_category_id
-      if (data.default_type_id) form.value.type_id = data.default_type_id
-      if (data.default_shelf_id) form.value.shelf_id = data.default_shelf_id
-      if (data.default_purchase_price) pricing.value.cost_of_goods_sold = data.default_purchase_price
-      if (data.default_origin_purchase_price) form.value.origin_purchase_price = data.default_origin_purchase_price
+    const defaultPrice = await fetchThriftDefaultPurchasePriceGbp(tenantId.value)
+    if (defaultPrice !== null) {
+      pricing.value.cost_of_goods_sold = defaultPrice
     }
   } catch (err) {
     console.warn('Could not load tenant default settings:', err)
@@ -623,7 +622,7 @@ const applyScannedBarcode = async (barcodeVal: string) => {
       return
     }
 
-    thriftStore.setTempBarcode(barcodeVal.trim())
+    thriftStore.setTempBarcode(result.canonicalBarcodeId || barcodeVal.trim())
     $q.notify({ type: 'positive', message: result.message })
   } catch (err) {
     console.error('Barcode validation error:', err)

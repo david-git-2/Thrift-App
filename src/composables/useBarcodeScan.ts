@@ -6,6 +6,7 @@ import {
   GoogleBarcodeScannerModuleInstallState,
 } from '@capacitor-mlkit/barcode-scanning'
 import { useQuasar } from 'quasar'
+import { normalizeScannedBarcode } from '../utils/normalizeScannedBarcode'
 
 export const barcodeScanOverlayActive = ref(false)
 
@@ -73,7 +74,8 @@ async function ensureGoogleBarcodeScannerModule(): Promise<void> {
 async function scanWithNativeUI(): Promise<string | null> {
   const { barcodes } = await BarcodeScanner.scan({ autoZoom: true })
   if (barcodes && barcodes.length > 0 && barcodes[0]) {
-    return barcodes[0].displayValue || barcodes[0].rawValue || null
+    const raw = barcodes[0].rawValue || barcodes[0].displayValue || null
+    return raw ? normalizeScannedBarcode(raw) : null
   }
   return null
 }
@@ -119,7 +121,8 @@ async function scanWithCameraOverlay(): Promise<string | null> {
       try {
         listenerHandle = await BarcodeScanner.addListener('barcodesScanned', async (event) => {
           const first = event.barcodes?.[0]
-          const value = first?.displayValue || first?.rawValue || null
+          const raw = first?.rawValue || first?.displayValue || null
+          const value = raw ? normalizeScannedBarcode(raw) : null
           await finish(value)
         })
 
