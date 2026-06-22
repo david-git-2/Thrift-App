@@ -6,14 +6,12 @@
         <template v-slot:avatar>
           <q-icon name="workspaces" color="white" />
         </template>
-        <div class="row items-center justify-between no-wrap">
-          <div>
-            <div class="text-weight-bold">
-              Active: {{ selectedShipment ? selectedShipment.name : 'No Shipment' }}
-            </div>
-            <div class="text-caption text-amber-3 text-weight-medium">
-              Box: {{ selectedBox ? selectedBox.name : 'No Box Selected' }}
-            </div>
+        <div class="row items-center justify-between no-wrap full-width">
+          <div class="text-body2 text-weight-medium ellipsis">
+            {{ selectedShipment?.name || 'No shipment' }}
+            <span class="text-caption text-amber-3">
+              · {{ selectedBox?.name || 'No box' }}
+            </span>
           </div>
           <q-btn
             flat
@@ -23,7 +21,7 @@
             icon="edit"
             label="Change"
             @click="changeContext"
-            class="q-ml-md"
+            class="q-ml-sm"
           />
         </div>
       </q-banner>
@@ -72,18 +70,43 @@
                 <PageInitialLoader compact message="Checking barcode..." />
               </div>
 
-              <div v-else class="text-center q-py-md">
+              <div v-else class="q-py-sm q-gutter-y-sm">
                 <q-btn
                   color="primary"
                   unelevated
                   icon="qr_code_scanner"
                   label="Scan Barcode"
-                  class="q-px-lg app-cta-btn"
-                  style="min-height: 44px !important; box-shadow: none;"
+                  class="full-width app-cta-btn"
                   no-caps
                   @click="startBarcodeScan"
                 />
-                <div class="text-caption text-grey-6 q-mt-xs">Use camera to scan item barcode</div>
+
+                <div class="row items-center q-my-xs">
+                  <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);" />
+                  <div class="col-auto q-px-sm text-caption text-grey-6">or enter manually</div>
+                  <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);" />
+                </div>
+
+                <div class="row q-col-gutter-xs">
+                  <div class="col">
+                    <q-input
+                      v-model="manualBarcode"
+                      outlined
+                      dense
+                      placeholder="Enter barcode..."
+                      @keyup.enter="submitManualBarcode"
+                    />
+                  </div>
+                  <div class="col-auto">
+                    <q-btn
+                      color="primary"
+                      icon="check"
+                      class="full-height"
+                      :disabled="!manualBarcode.trim()"
+                      @click="submitManualBarcode"
+                    />
+                  </div>
+                </div>
               </div>
             </q-card-section>
           </q-card>
@@ -150,15 +173,17 @@
             </q-card-section>
 
             <q-card-section class="q-gutter-y-md">
+            <q-form ref="stockFormRef" class="q-gutter-y-md">
               <div class="row q-col-gutter-sm">
                 <!-- Brand -->
                 <div class="col-12">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Brand Name</label>
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Brand Name *</label>
                   <q-input
                     v-model="form.brand_name"
                     outlined
                     dense
                     placeholder="e.g. Nike"
+                    :rules="[val => !!val?.trim() || 'Required']"
                   />
                 </div>
               </div>
@@ -179,7 +204,22 @@
                     clearable
                     label="Select Category"
                     :loading="loadingMeta"
-                  />
+                  >
+                    <template #option="scope">
+                      <q-item v-bind="scope.itemProps">
+                        <q-item-section avatar>
+                          <q-icon name="category" />
+                        </q-item-section>
+                        <q-item-section>{{ scope.opt.name }}</q-item-section>
+                      </q-item>
+                    </template>
+                    <template #selected-item="scope">
+                      <span v-if="scope.opt" class="row items-center no-wrap">
+                        <q-icon name="category" class="q-mr-sm" />
+                        {{ scope.opt.name }}
+                      </span>
+                    </template>
+                  </q-select>
                 </div>
 
                 <!-- Type/Style -->
@@ -197,7 +237,22 @@
                     clearable
                     label="Select Style"
                     :loading="loadingMeta"
-                  />
+                  >
+                    <template #option="scope">
+                      <q-item v-bind="scope.itemProps">
+                        <q-item-section avatar>
+                          <q-icon :name="resolveTypeIcon(scope.opt.icon)" />
+                        </q-item-section>
+                        <q-item-section>{{ scope.opt.name }}</q-item-section>
+                      </q-item>
+                    </template>
+                    <template #selected-item="scope">
+                      <span v-if="scope.opt" class="row items-center no-wrap">
+                        <q-icon :name="resolveTypeIcon(scope.opt.icon)" class="q-mr-sm" />
+                        {{ scope.opt.name }}
+                      </span>
+                    </template>
+                  </q-select>
                 </div>
               </div>
 
@@ -207,7 +262,7 @@
                   <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Section</label>
                   <q-select
                     v-model="form.section"
-                    :options="['UNISEX', 'MENS', 'WOMENS', 'KIDS']"
+                    :options="THRIFT_SECTION_OPTIONS"
                     outlined
                     dense
                     clearable
@@ -259,92 +314,137 @@
 
               <!-- Condition -->
               <div>
-                <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Condition</label>
+                <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Condition *</label>
                 <q-select
                   v-model="form.condition"
-                  :options="['NEW', 'LIKE_NEW', 'EXCELLENT', 'VERY_GOOD', 'GOOD', 'FAIR']"
+                  :options="THRIFT_CONDITION_OPTIONS"
                   outlined
                   dense
-                  clearable
+                  :rules="[val => !!val || 'Required']"
                 />
               </div>
 
               <!-- Weights -->
               <div class="row q-col-gutter-sm">
                 <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Product Wt (kg)</label>
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Product Weight (g) *</label>
                   <q-input
                     v-model.number="form.product_weight"
                     type="number"
-                    step="0.001"
+                    step="1"
+                    min="1"
                     outlined
                     dense
-                    placeholder="0.000"
+                    placeholder="e.g. 250"
+                    :rules="[val => val != null && val > 0 || 'Required']"
                   />
                 </div>
                 <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Wt (kg)</label>
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Weight (g)</label>
                   <q-input
                     v-model.number="form.extra_weight"
                     type="number"
-                    step="0.001"
+                    step="1"
+                    min="0"
                     outlined
                     dense
-                    placeholder="0.000"
+                    placeholder="0"
                   />
                 </div>
               </div>
 
               <q-separator class="q-my-md" />
 
-              <!-- Pricing Section -->
-              <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-xs">Pricing & Costing</div>
-              <div class="row q-col-gutter-sm">
-                <div class="col-4">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Purchase Cost</label>
-                  <q-input
-                    v-model.number="pricing.cost_of_goods_sold"
-                    type="number"
-                    step="0.01"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                  />
-                </div>
-                <div class="col-4">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Target Price</label>
-                  <q-input
-                    v-model.number="pricing.target_price"
-                    type="number"
-                    step="0.01"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                  />
-                </div>
-                <div class="col-4">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Listed Price</label>
-                  <q-input
-                    v-model.number="pricing.listed_price"
-                    type="number"
-                    step="0.01"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                  />
-                </div>
+              <!-- Purchase pricing -->
+              <div class="text-caption text-grey-8 q-mb-xs">
+                Purchase ({{ purchaseCurrency?.code ?? '—' }})
               </div>
-
-              <div class="row q-col-gutter-sm q-mt-xs">
-                <div class="col-12">
+              <div class="row q-col-gutter-sm">
+                <div class="col-12 col-sm-6">
                   <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Origin Purchase Price</label>
                   <q-input
                     v-model.number="form.origin_purchase_price"
                     type="number"
                     step="0.01"
+                    min="0"
                     outlined
                     dense
                     placeholder="0.00"
+                    :prefix="purchaseCurrencySymbol"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Origin Purchase Expense</label>
+                  <q-input
+                    v-model.number="extraOriginPurchaseExpense"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    outlined
+                    dense
+                    placeholder="0.00"
+                    :prefix="purchaseCurrencySymbol"
+                  />
+                </div>
+              </div>
+
+              <q-separator class="q-my-sm" />
+
+              <!-- Cost / pricing -->
+              <div class="text-caption text-grey-8 q-mb-xs">
+                Cost / pricing ({{ costCurrency?.code ?? '—' }})
+              </div>
+              <div class="row q-col-gutter-sm">
+                <div class="col-12 col-sm-6">
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">COGS Cost</label>
+                  <q-input
+                    v-model.number="pricing.cost_of_goods_sold"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    outlined
+                    dense
+                    placeholder="0.00"
+                    :prefix="costCurrencySymbol"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Expense Cost</label>
+                  <q-input
+                    v-model.number="pricing.extra_expense_cost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    outlined
+                    dense
+                    placeholder="0.00"
+                    :prefix="costCurrencySymbol"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Target Price</label>
+                  <q-input
+                    v-model.number="pricing.target_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    outlined
+                    dense
+                    placeholder="0.00"
+                    :prefix="costCurrencySymbol"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Listed Price</label>
+                  <q-input
+                    v-model.number="pricing.listed_price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    outlined
+                    dense
+                    placeholder="0.00"
+                    :prefix="costCurrencySymbol"
                   />
                 </div>
               </div>
@@ -363,26 +463,26 @@
                   placeholder="Any additional details or defect mentions..."
                 />
               </div>
+            </q-form>
             </q-card-section>
           </q-card>
         </div>
       </div>
 
-      <!-- Action Button footer -->
-      <div class="row justify-end q-mt-md q-mb-xl">
+      <div class="row justify-end q-mt-md q-mb-lg">
         <q-btn
           color="primary"
           icon="save"
-          label="Register & Save Item"
-          class="q-px-xl q-py-md text-weight-bold"
+          label="Save item"
+          class="q-px-lg app-cta-btn"
           no-caps
-          size="lg"
+          size="md"
+          style="min-height: 40px !important;"
           :loading="submitting"
           @click="submitStock"
         />
       </div>
 
-      <!-- Web hidden file input picker -->
       <input
         type="file"
         ref="fileInput"
@@ -391,47 +491,6 @@
         @change="handleWebFileChange"
       />
 
-      <!-- MOCK BARCODE SCANNING DIALOG FOR WEB -->
-      <q-dialog v-model="showBarcodeSimDialog" persistent>
-        <q-card style="width: 380px; max-width: 90vw;">
-          <q-card-section class="row items-center justify-between">
-            <div class="text-h6 text-weight-bold">Simulate Barcode Scan</div>
-            <q-btn flat round dense icon="close" v-close-popup />
-          </q-card-section>
-
-          <q-card-section class="q-gutter-y-md">
-            <q-input
-              v-model="simulatedBarcodeVal"
-              outlined
-              dense
-              label="Enter Barcode"
-              placeholder="e.g. BC-12345678"
-              autofocus
-            />
-            
-            <q-btn
-              flat
-              no-caps
-              color="primary"
-              label="Auto-Generate Barcode"
-              icon="gesture"
-              class="full-width"
-              @click="generateSimulatedBarcode"
-            />
-          </q-card-section>
-
-          <q-card-actions align="right" class="q-pa-md">
-            <q-btn flat label="Cancel" color="grey-7" no-caps v-close-popup />
-            <q-btn
-              label="Confirm Scan"
-              color="primary"
-              no-caps
-              :disabled="!simulatedBarcodeVal"
-              @click="confirmSimulatedScan"
-            />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
     </div>
 
     <PageInitialLoader
@@ -445,7 +504,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
+import { useQuasar, type QForm } from 'quasar'
 import { useThriftStore } from '../stores/thriftStore'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
@@ -465,30 +524,38 @@ import {
   fetchThriftDefaultPurchasePriceGbp,
   fetchThriftShelves,
   fetchThriftTypes,
+  type ThriftCatalogOption,
 } from '../composables/useThriftCatalog'
+import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
+import {
+  THRIFT_CONDITION_OPTIONS,
+  THRIFT_SECTION_OPTIONS,
+} from '../constants/thriftEnums'
+import { resolveTypeIcon } from '../utils/typeIcon'
+import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 const thriftStore = useThriftStore()
 const authStore = useAuthStore()
+const currencyStore = useThriftCurrencyStore()
 const { scanBarcode } = useBarcodeScan()
 const { capturePhoto, cropPhoto } = useProductPhoto()
 
 // State
-const categoryOptions = ref<any[]>([])
-const typeOptions = ref<any[]>([])
+const stockFormRef = ref<QForm | null>(null)
+const categoryOptions = ref<ThriftCatalogOption[]>([])
+const typeOptions = ref<ThriftCatalogOption[]>([])
 const shelfOptions = ref<any[]>([])
 const loadingMeta = ref(false)
 const submitting = ref(false)
+const extraOriginPurchaseExpense = ref(0)
 
 // Web Capture variables
 const fileInput = ref<HTMLInputElement | null>(null)
 const webBlob = ref<Blob | null>(null)
-
-// Mock Scan states
-const showBarcodeSimDialog = ref(false)
-const simulatedBarcodeVal = ref('')
+const manualBarcode = ref('')
 const barcodeChecking = ref(false)
 const barcodeAvailability = ref<BarcodeAvailability | null>(null)
 
@@ -511,7 +578,8 @@ const form = ref({
 const pricing = ref({
   cost_of_goods_sold: 0,
   target_price: 0,
-  listed_price: 0
+  listed_price: 0,
+  extra_expense_cost: 0,
 })
 
 // Get values from Store
@@ -521,6 +589,15 @@ const tempBarcode = computed(() => thriftStore.tempBarcode)
 const tempImage = computed(() => thriftStore.tempImage) // base64 or webPath
 const tenantId = computed(() => authStore.tenantId)
 const userEmail = computed(() => authStore.user?.email || 'app-user@brandwala.com')
+
+const purchaseCurrency = computed(() =>
+  currencyStore.currencyById(selectedShipment.value?.purchase_currency_id),
+)
+const costCurrency = computed(() =>
+  currencyStore.currencyById(selectedShipment.value?.cost_currency_id),
+)
+const purchaseCurrencySymbol = computed(() => purchaseCurrency.value?.symbol ?? '')
+const costCurrencySymbol = computed(() => costCurrency.value?.symbol ?? '')
 
 // Resolve preview image URL
 const previewImageUrl = computed(() => {
@@ -542,10 +619,35 @@ onMounted(async () => {
   if (!selectedShipment.value) {
     $q.notify({
       type: 'warning',
-      message: 'Please select active Shipment & Box first'
+      message: 'Please select active Shipment & Box first',
     })
     router.replace('/insert-stock')
     return
+  }
+
+  let shipment = selectedShipment.value
+  if (
+    shipment.purchase_currency_id == null ||
+    shipment.cost_currency_id == null
+  ) {
+    if (!tenantId.value) {
+      router.replace('/insert-stock')
+      return
+    }
+    try {
+      const refreshed = await refreshShipmentCurrencyIds(shipment.id, tenantId.value)
+      if (!refreshed) {
+        $q.notify({ type: 'warning', message: 'Shipment no longer exists. Please select again.' })
+        router.replace('/insert-stock')
+        return
+      }
+      thriftStore.setSelection(refreshed, selectedBox.value)
+      shipment = refreshed
+    } catch {
+      $q.notify({ type: 'negative', message: 'Could not load shipment currency settings.' })
+      router.replace('/insert-stock')
+      return
+    }
   }
 
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
@@ -555,7 +657,7 @@ onMounted(async () => {
     return
   }
 
-  await loadDropdowns()
+  await Promise.all([loadDropdowns(), currencyStore.loadCurrencies()])
   await loadTenantSettings()
 
   if (tempBarcode.value) {
@@ -565,7 +667,15 @@ onMounted(async () => {
 
 // Methods
 const changeContext = () => {
+  thriftStore.clearShipmentBox()
   router.push('/insert-stock')
+}
+
+const submitManualBarcode = async () => {
+  const value = manualBarcode.value.trim()
+  if (!value) return
+  await applyScannedBarcode(value)
+  manualBarcode.value = ''
 }
 
 const loadDropdowns = async () => {
@@ -595,7 +705,7 @@ const loadTenantSettings = async () => {
   try {
     const defaultPrice = await fetchThriftDefaultPurchasePriceGbp(tenantId.value)
     if (defaultPrice !== null) {
-      pricing.value.cost_of_goods_sold = defaultPrice
+      form.value.origin_purchase_price = defaultPrice
     }
   } catch (err) {
     console.warn('Could not load tenant default settings:', err)
@@ -636,43 +746,21 @@ const applyScannedBarcode = async (barcodeVal: string) => {
 }
 
 const startBarcodeScan = async () => {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const barcodeVal = await scanBarcode()
-      if (barcodeVal) {
-        await applyScannedBarcode(barcodeVal)
-      }
-    } catch (err) {
-      console.error('Barcode scanning error:', err)
-      const message = err instanceof Error ? err.message : 'Error scanning barcode'
-      $q.notify({ type: 'negative', message })
-      if (!Capacitor.isNativePlatform()) {
-        simulatedBarcodeVal.value = ''
-        showBarcodeSimDialog.value = true
-      }
+  try {
+    const barcodeVal = await scanBarcode()
+    if (barcodeVal) {
+      await applyScannedBarcode(barcodeVal)
     }
-  } else {
-    simulatedBarcodeVal.value = ''
-    showBarcodeSimDialog.value = true
+  } catch (err) {
+    console.error('Barcode scanning error:', err)
+    const message = err instanceof Error ? err.message : 'Error scanning barcode'
+    $q.notify({ type: 'warning', message: `${message}. Enter barcode manually.` })
   }
 }
 
 const clearBarcode = () => {
   thriftStore.setTempBarcode(null)
   barcodeAvailability.value = null
-}
-
-// Simulator Dialog actions
-const generateSimulatedBarcode = () => {
-  const codeSeq = Math.floor(Math.random() * 900000) + 100000
-  simulatedBarcodeVal.value = `BC-${tenantId.value}-${selectedShipment.value?.id || 0}-${codeSeq}`
-}
-
-const confirmSimulatedScan = async () => {
-  showBarcodeSimDialog.value = false
-  if (simulatedBarcodeVal.value.trim()) {
-    await applyScannedBarcode(simulatedBarcodeVal.value.trim())
-  }
 }
 
 // Camera Features
@@ -756,6 +844,12 @@ const submitStock = async () => {
     return
   }
 
+  const formValid = await stockFormRef.value?.validate()
+  if (!formValid) {
+    $q.notify({ type: 'negative', message: 'Please fill in all required fields' })
+    return
+  }
+
   submitting.value = true
 
   try {
@@ -780,9 +874,11 @@ const submitStock = async () => {
       extraWeight: form.value.extra_weight,
       note: form.value.note,
       originPurchasePrice: form.value.origin_purchase_price,
+      extraOriginPurchaseExpense: extraOriginPurchaseExpense.value || null,
       costOfGoodsSold: pricing.value.cost_of_goods_sold,
       targetPrice: pricing.value.target_price,
       listedPrice: pricing.value.listed_price,
+      extraExpenseCost: pricing.value.extra_expense_cost || null,
       insertedBy: userEmail.value,
     })
 
@@ -805,6 +901,7 @@ const submitStock = async () => {
     form.value.product_weight = null
     form.value.extra_weight = null
     form.value.origin_purchase_price = null
+    extraOriginPurchaseExpense.value = 0
 
   } catch (err: any) {
     console.error('Error saving thrift stock:', err)

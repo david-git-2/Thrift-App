@@ -1,0 +1,21 @@
+---
+description: Thrift-app architecture doc — read first, update on new features
+globs:
+  - Thrift-app/**
+alwaysApply: true
+---
+
+# Thrift App — Architecture Discipline
+
+## Before exploring the codebase
+
+1. Read **[AI_ARCHITECTURE.md](../AI_ARCHITECTURE.md)** at the repo root of `Thrift-app/`.
+2. Open only files listed there or named in the user's request.
+3. For web/admin parity, reference `brandwala-wholesale-quasar-v2/web/src/modules/thrift*`.
+
+## After shipping a feature
+
+If the change adds or modifies routes, composables, stores, RPC usage, DB enums, or domain fields:
+
+1. Update **AI_ARCHITECTURE.md** — composables index, domain contracts, and/or feature changelog (one bullet per feature).
+2. Do not duplicate code in the doc; tables and short bullets only.

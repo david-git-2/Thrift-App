@@ -2,9 +2,7 @@
   <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
       <AppPageHeader
-        eyebrow="Stock"
         title="Insert Stock"
-        subtitle="Select a shipment and box, then register new items into inventory."
       />
 
       <!-- State 1: No shipment selected -->
@@ -15,7 +13,7 @@
           </div>
           <div class="text-h6 text-weight-bold text-grey-9 q-mb-xs">No shipment selected</div>
           <p class="text-body2 text-grey-7 q-mb-lg insert-stock__hint">
-            Choose a shipment and box before adding items to stock.
+            Choose a shipment and box to start.
           </p>
           <q-btn
             color="primary"
@@ -213,12 +211,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useThriftStore } from '../stores/thriftStore'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
+import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
 import AppPageHeader from '../components/AppPageHeader.vue'
 
 const router = useRouter()
@@ -249,14 +248,36 @@ const selectedBox = computed(() => thriftStore.selectedBox)
 const tenantId = computed(() => authStore.tenantId)
 
 const openSelector = async () => {
-  tempShipment.value = selectedShipment.value
-  tempBox.value = selectedBox.value
+  thriftStore.clearShipmentBox()
+  tempShipment.value = null
+  tempBox.value = null
+  boxOptions.value = []
   dialogOpen.value = true
   await fetchShipments()
-  if (tempShipment.value) {
-    await fetchBoxes(tempShipment.value.id)
+}
+
+const hydrateShipmentIfNeeded = async () => {
+  const shipment = selectedShipment.value
+  if (!shipment || !tenantId.value) return
+  if (
+    shipment.purchase_currency_id != null &&
+    shipment.cost_currency_id != null
+  ) {
+    return
+  }
+  try {
+    const refreshed = await refreshShipmentCurrencyIds(shipment.id, tenantId.value)
+    if (refreshed) {
+      thriftStore.setSelection(refreshed, selectedBox.value)
+    }
+  } catch (err) {
+    console.warn('Could not refresh shipment currency IDs:', err)
   }
 }
+
+onMounted(() => {
+  void hydrateShipmentIfNeeded()
+})
 
 const fetchShipments = async () => {
   if (!tenantId.value) return
@@ -264,7 +285,7 @@ const fetchShipments = async () => {
   try {
     const { data, error } = await supabase
       .from('thrift_shipments')
-      .select('id, name, tenant_id')
+      .select('id, name, tenant_id, purchase_currency_id, cost_currency_id')
       .eq('tenant_id', tenantId.value)
       .order('created_at', { ascending: false })
 

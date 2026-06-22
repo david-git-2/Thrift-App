@@ -20,7 +20,13 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'stock-list',
+        name: 'stock-list',
         component: () => import('../pages/StockList.vue')
+      },
+      {
+        path: 'stock/:id',
+        name: 'stock-detail',
+        component: () => import('../pages/StockDetailPage.vue')
       },
       {
         path: 'scan-barcode',

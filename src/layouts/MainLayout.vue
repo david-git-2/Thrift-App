@@ -1,6 +1,5 @@
 <template>
   <q-layout view="hHh lpR fFf" class="theme-app">
-    <!-- Header -->
     <q-header class="app-header text-white">
       <q-toolbar>
         <div class="app-header__brand">
@@ -13,24 +12,43 @@
           </q-toolbar-title>
         </div>
 
-        <div v-if="userEmail" class="row items-center q-gutter-xs app-header__user">
-          <q-avatar size="28px" v-if="avatarUrl">
-            <img :src="avatarUrl" />
-          </q-avatar>
-          <span class="text-caption gt-xs">{{ userEmail }}</span>
-          <q-btn flat round dense icon="logout" @click="onLogout">
-            <q-tooltip>Sign Out</q-tooltip>
+        <div v-if="userEmail" class="app-header__user">
+          <q-btn flat round dense class="q-pa-none">
+            <q-avatar size="28px" color="white" text-color="primary">
+              <img
+                v-if="showAvatarImage"
+                :src="avatarUrl"
+                alt=""
+                @error="onAvatarError"
+              />
+              <q-icon v-else name="person" size="18px" />
+            </q-avatar>
+            <q-menu anchor="bottom right" self="top right">
+              <q-list style="min-width: 200px">
+                <q-item>
+                  <q-item-section>
+                    <q-item-label class="text-weight-medium">{{ userEmail }}</q-item-label>
+                    <q-item-label caption>v{{ APP_VERSION }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-separator />
+                <q-item clickable v-close-popup @click="onLogout">
+                  <q-item-section avatar>
+                    <q-icon name="logout" />
+                  </q-item-section>
+                  <q-item-section>Sign out</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
           </q-btn>
         </div>
       </q-toolbar>
     </q-header>
 
-    <!-- Page Content -->
     <q-page-container>
       <router-view />
     </q-page-container>
 
-    <!-- Bottom Navigation Tabs (Perfect for Android App Layout) -->
     <q-footer class="app-tabbar text-grey-8">
       <q-tabs
         v-model="activeTab"
@@ -72,6 +90,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../boot/supabase'
+import { APP_VERSION } from '../constants/appVersion'
 import BarcodeScanOverlay from '../components/BarcodeScanOverlay.vue'
 import BrandMark from '../components/BrandMark.vue'
 
@@ -79,10 +98,16 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const activeTab = ref('insert-stock')
+const avatarBroken = ref(false)
 
 const tenantName = computed(() => authStore.tenant?.name ?? '')
 const userEmail = computed(() => authStore.user?.email ?? '')
 const avatarUrl = computed(() => authStore.user?.avatarUrl ?? '')
+const showAvatarImage = computed(() => Boolean(avatarUrl.value) && !avatarBroken.value)
+
+const onAvatarError = () => {
+  avatarBroken.value = true
+}
 
 const onLogout = async () => {
   authStore.clearAccess()
@@ -90,4 +115,3 @@ const onLogout = async () => {
   await router.replace('/login')
 }
 </script>
-

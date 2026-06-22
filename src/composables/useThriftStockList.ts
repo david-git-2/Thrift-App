@@ -17,6 +17,7 @@ export interface ThriftStockListItem {
   barcode: string | null
   status: string
   created_at: string
+  shipment_id: number
   cost_of_goods_sold: number
   target_price: number
   listed_price: number
@@ -47,6 +48,7 @@ interface ThriftStockRow {
   barcode: string | null
   status: string
   created_at: string
+  shipment_id: number
   thrift_pricings?: Array<{
     cost_of_goods_sold: number
     target_price: number
@@ -58,11 +60,32 @@ interface ThriftStockRow {
   }> | null
 }
 
-function isMissingRpcError(error: { code?: string; message?: string }): boolean {
-  return (
+function shouldFallbackToDirectQuery(error: {
+  code?: string
+  message?: string
+  status?: number
+}): boolean {
+  const message = error.message ?? ''
+
+  if (
     error.code === 'PGRST202' ||
-    /could not find the function/i.test(error.message ?? '')
-  )
+    /could not find the function/i.test(message)
+  ) {
+    return true
+  }
+
+  if (
+    error.code === '57014' ||
+    /statement timeout|canceling statement/i.test(message)
+  ) {
+    return true
+  }
+
+  if (error.status === 502 || error.status === 504) {
+    return true
+  }
+
+  return /gateway timeout|bad gateway|504|502/i.test(message)
 }
 
 function escapeIlike(value: string): string {
@@ -85,6 +108,7 @@ function mapStockRow(item: ThriftStockRow): ThriftStockListItem {
     barcode: item.barcode ?? null,
     status: item.status || 'AVAILABLE',
     created_at: item.created_at || '',
+    shipment_id: item.shipment_id,
     cost_of_goods_sold: Number(pricing?.cost_of_goods_sold) || 0,
     target_price: Number(pricing?.target_price) || 0,
     listed_price: Number(pricing?.listed_price) || 0,
@@ -111,6 +135,7 @@ function mapRpcPayload(data: {
         barcode: (item.barcode as string | null) ?? null,
         status: (item.status as string) || 'AVAILABLE',
         created_at: (item.created_at as string) || '',
+        shipment_id: Number(item.shipment_id) || 0,
         cost_of_goods_sold: Number(pricing.cost_of_goods_sold) || 0,
         target_price: Number(pricing.target_price) || 0,
         listed_price: Number(pricing.listed_price) || 0,
@@ -170,6 +195,7 @@ async function fetchThriftStocksDirect(
         barcode,
         status,
         created_at,
+        shipment_id,
         thrift_pricings (
           cost_of_goods_sold,
           target_price,
@@ -222,12 +248,13 @@ export async function fetchThriftStocksPaginated(
   try {
     return await fetchThriftStocksViaRpc(params)
   } catch (error) {
-    if (!isMissingRpcError(error as { code?: string; message?: string })) {
+    if (!shouldFallbackToDirectQuery(error as { code?: string; message?: string; status?: number })) {
       throw error
     }
 
     console.warn(
-      'list_thrift_stocks_paginated RPC unavailable; falling back to direct query.',
+      'list_thrift_stocks_paginated RPC failed; falling back to direct query.',
+      error,
     )
     return fetchThriftStocksDirect(params)
   }

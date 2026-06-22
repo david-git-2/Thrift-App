@@ -3,6 +3,7 @@ import { supabase } from '../boot/supabase'
 export interface ThriftCatalogOption {
   id: number
   name: string
+  icon?: string | null
 }
 
 export interface ThriftShelfOption {
@@ -24,7 +25,7 @@ export async function fetchThriftCategories(tenantId: number): Promise<ThriftCat
 export async function fetchThriftTypes(tenantId: number): Promise<ThriftCatalogOption[]> {
   const { data, error } = await supabase
     .from('thrift_types')
-    .select('id, name')
+    .select('id, name, icon')
     .or(`tenant_id.eq.${tenantId},is_global.eq.true`)
     .order('name')
 

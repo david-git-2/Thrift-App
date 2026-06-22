@@ -4,6 +4,8 @@ export interface SelectedShipment {
   id: number
   name: string
   tenant_id: number
+  purchase_currency_id: number
+  cost_currency_id: number
 }
 
 export interface SelectedBox {
@@ -52,6 +54,11 @@ export const useThriftStore = defineStore('thrift', {
       this.selectedBox = null
       this.tempBarcode = null
       this.tempImage = null
+      this.saveToStorage()
+    },
+    clearShipmentBox() {
+      this.selectedShipment = null
+      this.selectedBox = null
       this.saveToStorage()
     },
     setTempBarcode(barcode: string | null) {

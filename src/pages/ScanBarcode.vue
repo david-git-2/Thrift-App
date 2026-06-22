@@ -1,13 +1,8 @@
 <template>
   <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
-      <AppPageHeader
-        eyebrow="Lookup"
-        title="Scan Barcode"
-        subtitle="Scan any stock barcode to view its details instantly."
-      />
+      <AppPageHeader title="Scan" />
 
-      <!-- Action Panel (Start Scan or Input) -->
       <q-card class="app-card q-pa-md">
         <div class="text-center q-gutter-y-sm">
           <q-btn
@@ -15,16 +10,16 @@
             unelevated
             icon="qr_code_scanner"
             label="Scan Barcode"
-            size="lg"
-            class="full-width app-cta-btn app-cta-btn--scan"
+            size="md"
+            class="full-width app-cta-btn"
             no-caps
             @click="startScan"
           />
 
           <div class="row items-center q-my-sm">
-            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);"></div>
-            <div class="col-auto q-px-sm text-caption text-grey-6 text-weight-bold text-uppercase">or enter manually</div>
-            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);"></div>
+            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);" />
+            <div class="col-auto q-px-sm text-caption text-grey-6">or enter manually</div>
+            <div class="col" style="height: 1px; background: rgb(var(--bw-theme-primary-rgb) / 0.12);" />
           </div>
 
           <div class="row q-col-gutter-xs">
@@ -50,212 +45,162 @@
         </div>
       </q-card>
 
-      <!-- Loading State -->
-      <PageInitialLoader v-if="searching" compact message="Looking up barcode..." />
+      <PageInitialLoader v-if="searching" compact message="Looking up..." />
 
-      <!-- Lookup Result Card -->
-      <div v-else-if="scannedItem" class="q-mt-md">
-        <q-card class="app-card app-card--elevated overflow-hidden">
-          <!-- Card Header / Title -->
-          <q-card-section class="bg-primary text-white q-py-md">
-            <div class="row items-center justify-between">
-              <div class="row items-center">
-                <q-icon name="qr_code" size="sm" class="q-mr-sm" />
-                <div>
-                  <div class="text-caption text-amber-3 text-weight-bold text-uppercase letter-spacing-xs">Barcode Found</div>
-                  <div class="text-subtitle2 text-weight-mono text-white">{{ scannedItem.barcode }}</div>
-                </div>
-              </div>
-              <q-btn flat round color="white" icon="close" size="sm" @click="clearResult" />
+      <div v-else-if="scannedItem" class="q-mt-sm">
+        <q-card class="app-card overflow-hidden">
+          <div class="relative-position cursor-pointer" @click="openImagePreview">
+            <q-img
+              v-if="scannedItem.image_url"
+              :src="scannedItem.image_url"
+              ratio="4/3"
+              fit="cover"
+            />
+            <div v-else class="scan-hero-placeholder flex flex-center bg-grey-2">
+              <q-icon name="image" size="3rem" color="grey-4" />
             </div>
-          </q-card-section>
-
-          <!-- Main Info Section -->
-          <div class="row no-wrap items-stretch border-bottom-light">
-            <!-- Product Image -->
-            <div class="col-5 flex flex-center bg-grey-2 relative-position" style="min-height: 150px;">
-              <q-img
-                v-if="scannedItem.image_url"
-                :src="scannedItem.image_url"
-                class="full-height"
-                ratio="1"
-                fit="cover"
-              />
-              <q-icon v-else name="image" size="3rem" color="grey-4" />
-            </div>
-
-            <!-- Basic Properties -->
-            <div class="col-7 q-pa-md flex flex-col justify-between">
-              <div>
-                <span class="text-caption text-weight-bold text-primary text-uppercase">
-                  {{ scannedItem.brand_name || 'Generic' }}
-                </span>
-                <div class="text-h6 text-weight-bold text-grey-9 q-mt-xs line-height-sm">
-                  {{ scannedItem.name || scannedItem.brand_name || scannedItem.barcode }}
-                </div>
-                
-                <div class="row items-center q-gutter-x-sm text-caption text-grey-6 q-mt-sm">
-                  <span v-if="scannedItem.color" class="row items-center">
-                    <q-badge rounded :style="{ backgroundColor: getBadgeColor(scannedItem.color) }" class="q-mr-xs border-light" />
-                    {{ scannedItem.color }}
-                  </span>
-                  <span>•</span>
-                  <span>Sz {{ scannedItem.size || 'N/A' }}</span>
-                </div>
-              </div>
-
-              <!-- Status & Condition Badge Row -->
-              <div class="row q-gutter-xs q-mt-sm">
-                <q-chip
-                  dense
-                  :color="getStatusColor(scannedItem.status)"
-                  text-color="white"
-                  class="text-uppercase text-weight-bold q-ma-none text-xxs"
-                  style="height: 18px;"
-                >
-                  {{ scannedItem.status }}
-                </q-chip>
-                <q-chip
-                  dense
-                  outline
-                  color="grey-8"
-                  class="text-uppercase text-weight-bold q-ma-none text-xxs"
-                  style="height: 18px;"
-                >
-                  {{ formatCondition(scannedItem.condition) }}
-                </q-chip>
-              </div>
-            </div>
+            <q-chip
+              dense
+              :color="getStatusColor(scannedItem.status)"
+              text-color="white"
+              class="absolute-top-left q-ma-sm text-uppercase text-weight-bold"
+            >
+              {{ scannedItem.status }}
+            </q-chip>
           </div>
 
-          <!-- Extended Details List -->
-          <q-list class="bg-grey-1" separator>
-            <q-item dense class="q-py-md">
-              <q-item-section avatar>
-                <q-icon name="sell" color="grey-7" size="xs" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label class="text-caption text-grey-5 text-uppercase text-weight-medium">Listed Pricing</q-item-label>
-                <q-item-label class="text-subtitle1 text-weight-bold text-grey-9">
-                  ${{ scannedItem.listed_price?.toFixed(2) }}
-                  <span class="text-caption text-grey-6 text-weight-regular q-ml-md">
-                    (Cost: ${{ scannedItem.cost_of_goods_sold?.toFixed(2) }} | Target: ${{ scannedItem.target_price?.toFixed(2) }})
-                  </span>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
+          <q-card-section class="q-pa-md">
+            <div class="row items-center q-gutter-xs q-mb-xs">
+              <span class="text-caption text-weight-bold text-primary text-uppercase">
+                {{ scannedItem.brand_name || 'Generic' }}
+              </span>
+              <q-chip dense outline size="sm" class="q-ma-none">
+                {{ formatCondition(scannedItem.condition) }}
+              </q-chip>
+            </div>
 
-            <q-item dense class="q-py-md">
-              <q-item-section avatar>
-                <q-icon name="layers" color="grey-7" size="xs" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label class="text-caption text-grey-5 text-uppercase text-weight-medium">Location & Shelf</q-item-label>
-                <q-item-label class="text-body2 text-grey-9 font-semibold">
-                  {{ scannedItem.shelf_code || 'No Shelf Code Assigned' }}
-                  <span v-if="scannedItem.shelf_name" class="text-grey-6 text-weight-regular q-ml-sm">
-                    ({{ scannedItem.shelf_name }})
-                  </span>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
+            <div class="text-h6 text-weight-bold text-grey-9 line-height-sm">
+              {{ scannedItem.name || scannedItem.brand_name || scannedItem.barcode }}
+            </div>
 
-            <q-item dense class="q-py-md">
-              <q-item-section avatar>
-                <q-icon name="local_shipping" color="grey-7" size="xs" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label class="text-caption text-grey-5 text-uppercase text-weight-medium">Shipment Context</q-item-label>
-                <q-item-label class="text-body2 text-grey-9">
-                  {{ scannedItem.shipment_name || 'Direct / Unknown Shipment' }}
-                  <span v-if="scannedItem.box_name" class="text-amber-9 text-weight-bold q-ml-md text-caption">
-                    Box: {{ scannedItem.box_name }}
-                  </span>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
+            <div class="row items-center q-gutter-xs text-caption text-grey-6 q-mt-xs">
+              <span v-if="scannedItem.color">{{ scannedItem.color }}</span>
+              <span v-if="scannedItem.color && scannedItem.size">·</span>
+              <span v-if="scannedItem.size">Sz {{ scannedItem.size }}</span>
+            </div>
 
-            <q-item dense class="q-py-md" v-if="scannedItem.product_weight || scannedItem.note">
-              <q-item-section avatar>
-                <q-icon name="description" color="grey-7" size="xs" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label class="text-caption text-grey-5 text-uppercase text-weight-medium">Specs & Notes</q-item-label>
-                <q-item-label class="text-body2 text-grey-9">
-                  <span v-if="scannedItem.product_weight">Weight: {{ scannedItem.product_weight }}g</span>
-                  <span v-if="scannedItem.extra_weight"> (+{{ scannedItem.extra_weight }}g extra)</span>
-                  <div v-if="scannedItem.note" class="text-italic text-grey-6 q-mt-xs">
-                    "{{ scannedItem.note }}"
-                  </div>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
+            <div
+              class="row items-center bg-grey-1 rounded-borders q-px-sm q-py-xs q-mt-sm cursor-pointer"
+              @click="copyBarcode(scannedItem.barcode)"
+            >
+              <q-icon name="qr_code" size="14px" color="grey-6" class="q-mr-xs" />
+              <span class="text-caption text-mono text-grey-8 col">{{ scannedItem.barcode }}</span>
+              <q-icon name="content_copy" size="12px" color="grey-6" />
+            </div>
+
+            <div class="row q-col-gutter-sm q-mt-md">
+              <div class="col-4">
+                <div class="scan-price-tile">
+                  <div class="text-caption text-grey-6">Listed</div>
+                  <div class="text-subtitle2 text-weight-bold">{{ formatPrice(scannedItem.listed_price) }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="scan-price-tile">
+                  <div class="text-caption text-grey-6">Cost</div>
+                  <div class="text-subtitle2 text-weight-bold">{{ formatPrice(scannedItem.cost_of_goods_sold) }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="scan-price-tile">
+                  <div class="text-caption text-grey-6">Target</div>
+                  <div class="text-subtitle2 text-weight-bold">{{ formatPrice(scannedItem.target_price) }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="q-mt-md q-gutter-y-xs text-body2 text-grey-8">
+              <div class="row items-center no-wrap">
+                <q-icon name="local_shipping" size="16px" color="grey-6" class="q-mr-sm" />
+                <span class="ellipsis">
+                  {{ scannedItem.shipment_name || 'Unknown shipment' }}
+                  <span v-if="scannedItem.box_name" class="text-grey-6"> · {{ scannedItem.box_name }}</span>
+                </span>
+              </div>
+              <div class="row items-center no-wrap">
+                <q-icon name="layers" size="16px" color="grey-6" class="q-mr-sm" />
+                <span>{{ scannedItem.shelf_code || 'No shelf' }}</span>
+              </div>
+              <div
+                v-if="scannedItem.product_weight || scannedItem.note"
+                class="row items-start no-wrap"
+              >
+                <q-icon name="scale" size="16px" color="grey-6" class="q-mr-sm q-mt-xs" />
+                <span>
+                  <span v-if="scannedItem.product_weight">{{ scannedItem.product_weight }}g</span>
+                  <span v-if="scannedItem.note" class="text-grey-6"> — {{ scannedItem.note }}</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="row q-gutter-sm q-mt-md">
+              <q-btn
+                color="primary"
+                unelevated
+                no-caps
+                class="col app-cta-btn"
+                label="View & Edit"
+                icon="edit"
+                @click="goToStockDetail"
+              />
+              <q-btn
+                flat
+                color="grey-7"
+                no-caps
+                class="col"
+                label="Scan again"
+                icon="refresh"
+                @click="clearResult"
+              />
+            </div>
+          </q-card-section>
         </q-card>
       </div>
 
-      <!-- No Item Found State -->
-      <div v-else-if="searchedBarcode" class="app-empty-state">
+      <div v-else-if="searchedBarcode" class="app-empty-state q-mt-md">
         <div class="app-empty-state__icon" style="background: rgb(245 158 11 / 0.12); color: #d97706;">
           <q-icon name="warning" size="2rem" />
         </div>
-        <div class="text-h6 text-weight-bold text-grey-8">Item not found</div>
-        <p class="text-caption text-grey-6 q-mt-xs">
-          No stock registered under barcode <strong class="text-grey-9">{{ searchedBarcode }}</strong>.
-        </p>
+        <div class="text-subtitle1 text-weight-bold text-grey-8">Not found</div>
+        <p class="text-caption text-grey-6 q-mt-xs text-mono">{{ searchedBarcode }}</p>
         <div class="q-mt-md row justify-center q-gutter-sm">
-          <q-btn
-            color="primary"
-            label="Register This Item"
-            no-caps
-            class="q-px-md"
-            @click="goToRegisterStock"
-          />
-          <q-btn
-            color="grey-7"
-            flat
-            label="Clear"
-            no-caps
-            @click="clearResult"
-          />
+          <q-btn color="primary" label="Register item" no-caps @click="goToRegisterStock" />
+          <q-btn flat color="grey-7" label="Try again" no-caps @click="clearResult" />
         </div>
       </div>
 
-      <!-- Initial State -->
-      <div v-else class="text-center q-py-xl text-grey-5">
-        <q-icon name="search" size="4rem" color="grey-3" class="q-mb-md" />
-        <div class="text-subtitle1 text-weight-medium">Awaiting Barcode Scan</div>
-        <p class="text-caption q-px-lg">Use the green Scan Barcode button above or type/paste in a code to lookup product information.</p>
+      <div v-else class="text-center q-py-lg text-grey-5">
+        <q-icon name="qr_code_scanner" size="3rem" color="grey-3" class="q-mb-sm" />
+        <div class="text-body2">Scan or enter a barcode</div>
       </div>
 
-      <!-- Web Simulated Scanner Dialog -->
       <q-dialog v-model="showSimDialog" persistent>
         <q-card style="min-width: 300px;" class="rounded-borders">
-          <q-card-section class="bg-primary text-white row items-center q-py-sm">
-            <div class="text-subtitle1 text-weight-bold">Web Barcode Simulator</div>
-            <q-space />
-            <q-btn icon="close" flat round dense v-close-popup />
-          </q-card-section>
-
-          <q-card-section class="q-gutter-y-md q-pt-md">
+          <q-card-section class="q-gutter-y-md">
+            <div class="text-subtitle1 text-weight-bold">Enter barcode</div>
             <q-input
               v-model="simulatedBarcode"
               outlined
               dense
-              label="Enter Simulated Barcode"
               placeholder="e.g. BC-1-2-12345"
               autofocus
               @keyup.enter="confirmSimulatedScan"
             />
-            <p class="text-caption text-grey-6 q-my-none">
-              Type or copy a barcode you'd like to test. e.g. from the Stock List page.
-            </p>
           </q-card-section>
-
           <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancel" color="grey-7" no-caps v-close-popup />
             <q-btn
-              label="Submit"
+              label="Search"
               color="primary"
               no-caps
               :disabled="!simulatedBarcode.trim()"
@@ -264,12 +209,26 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
+
+      <q-dialog v-model="imagePreviewOpen" maximized>
+        <q-card class="bg-black flex flex-center">
+          <q-img v-if="scannedItem?.image_url" :src="scannedItem.image_url" fit="contain" />
+          <q-btn
+            flat
+            round
+            icon="close"
+            color="white"
+            class="absolute-top-right q-ma-md"
+            @click="imagePreviewOpen = false"
+          />
+        </q-card>
+      </q-dialog>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { supabase } from '../boot/supabase'
@@ -279,24 +238,61 @@ import { Capacitor } from '@capacitor/core'
 import { useBarcodeScan } from '../composables/useBarcodeScan'
 import { normalizeScannedBarcode } from '../utils/normalizeScannedBarcode'
 import { buildBarcodeCandidates } from '../utils/barcodeCandidates'
+import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
+import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
+import { formatThriftAmount } from '../utils/formatThriftAmount'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 import AppPageHeader from '../components/AppPageHeader.vue'
+
+interface ScannedStockItem {
+  id: number
+  shipment_id: number
+  name: string | null
+  brand_name: string | null
+  color: string | null
+  size: string | null
+  condition: string | null
+  barcode: string | null
+  status: string
+  product_weight: number | null
+  extra_weight: number | null
+  note: string | null
+  cost_of_goods_sold: number
+  target_price: number
+  listed_price: number
+  image_url: string
+  shelf_code: string
+  shelf_name: string
+  shipment_name: string
+  box_name: string
+}
 
 const router = useRouter()
 const $q = useQuasar()
 const authStore = useAuthStore()
+const currencyStore = useThriftCurrencyStore()
 const thriftStore = useThriftStore()
 const { scanBarcode } = useBarcodeScan()
 
-// State
 const manualBarcode = ref('')
 const searching = ref(false)
-const scannedItem = ref<any | null>(null)
+const scannedItem = ref<ScannedStockItem | null>(null)
 const searchedBarcode = ref('')
+const shipmentCostCurrencyId = ref<number | null>(null)
 
-// Simulator state
 const showSimDialog = ref(false)
 const simulatedBarcode = ref('')
+const imagePreviewOpen = ref(false)
+
+const costCurrency = computed(() =>
+  currencyStore.currencyById(shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId),
+)
+
+const formatPrice = (amount: number) => formatThriftAmount(amount, costCurrency.value)
+
+onMounted(() => {
+  void currencyStore.loadCurrencies()
+})
 
 const startScan = async () => {
   if (Capacitor.isNativePlatform()) {
@@ -308,7 +304,7 @@ const startScan = async () => {
     } catch (err) {
       console.error('Barcode scanning error:', err)
       const message = err instanceof Error ? err.message : 'Scanning error'
-      $q.notify({ type: 'negative', message })
+      $q.notify({ type: 'warning', message: `${message}. Enter barcode manually.` })
     }
   } else {
     simulatedBarcode.value = ''
@@ -326,7 +322,7 @@ const confirmSimulatedScan = () => {
 const lookupBarcode = async (barcodeVal: string) => {
   const tenantId = authStore.tenantId
   if (!tenantId) {
-    $q.notify({ type: 'negative', message: 'User session expired or tenant not selected' })
+    $q.notify({ type: 'negative', message: 'Session expired' })
     return
   }
 
@@ -338,9 +334,10 @@ const lookupBarcode = async (barcodeVal: string) => {
   searching.value = true
   scannedItem.value = null
   searchedBarcode.value = normalized
+  shipmentCostCurrencyId.value = null
 
   try {
-    let lookupBarcode = normalized
+    let lookupBarcodeValue = normalized
 
     try {
       const { data: resolved, error: resolveError } = await supabase.rpc('resolve_thrift_barcode', {
@@ -351,8 +348,8 @@ const lookupBarcode = async (barcodeVal: string) => {
 
       const match = Array.isArray(resolved) ? resolved[0] : null
       if (match?.barcode_id) {
-        lookupBarcode = match.barcode_id
-        searchedBarcode.value = lookupBarcode
+        lookupBarcodeValue = match.barcode_id
+        searchedBarcode.value = lookupBarcodeValue
       }
     } catch (resolveErr) {
       console.warn('resolve_thrift_barcode failed, using direct lookup:', resolveErr)
@@ -365,8 +362,8 @@ const lookupBarcode = async (barcodeVal: string) => {
           .maybeSingle()
         if (error) throw error
         if (data?.barcode_id) {
-          lookupBarcode = data.barcode_id
-          searchedBarcode.value = lookupBarcode
+          lookupBarcodeValue = data.barcode_id
+          searchedBarcode.value = lookupBarcodeValue
           break
         }
       }
@@ -376,6 +373,7 @@ const lookupBarcode = async (barcodeVal: string) => {
       .from('thrift_stocks')
       .select(`
         id,
+        shipment_id,
         name,
         brand_name,
         color,
@@ -407,50 +405,56 @@ const lookupBarcode = async (barcodeVal: string) => {
         )
       `)
       .eq('tenant_id', tenantId)
-      .eq('barcode', lookupBarcode)
+      .eq('barcode', lookupBarcodeValue)
       .maybeSingle()
 
     if (error) throw error
 
     if (data) {
-      const raw = data as any
-      // Map properties
-      const pricing = Array.isArray(raw.thrift_pricings) ? (raw.thrift_pricings[0] || {}) : (raw.thrift_pricings || {})
-      const imgs = raw.thrift_stock_images || []
-      const primaryImg = imgs.find((i: any) => i.is_primary) || imgs[0]
-      const shelf = Array.isArray(raw.thrift_shelves) ? (raw.thrift_shelves[0] || {}) : (raw.thrift_shelves || {})
-      const shipment = Array.isArray(raw.thrift_shipments)
-        ? (raw.thrift_shipments[0] || {})
-        : (raw.thrift_shipments || {})
-      const box = Array.isArray(raw.thrift_boxes) ? (raw.thrift_boxes[0] || {}) : (raw.thrift_boxes || {})
+      const raw = data as Record<string, unknown>
+      const pricingArr = raw.thrift_pricings as Array<Record<string, unknown>> | undefined
+      const pricing = pricingArr?.[0] ?? {}
+      const imgs = (raw.thrift_stock_images as Array<Record<string, unknown>>) || []
+      const primaryImg = imgs.find((i) => i.is_primary) || imgs[0]
+      const shelfArr = raw.thrift_shelves as Array<Record<string, unknown>> | undefined
+      const shelf = shelfArr?.[0] ?? {}
+      const shipmentArr = raw.thrift_shipments as Array<Record<string, unknown>> | undefined
+      const shipment = shipmentArr?.[0] ?? {}
+      const boxArr = raw.thrift_boxes as Array<Record<string, unknown>> | undefined
+      const box = boxArr?.[0] ?? {}
+
+      const shipmentId = raw.shipment_id as number
+      const shipmentRow = await refreshShipmentCurrencyIds(shipmentId, tenantId)
+      shipmentCostCurrencyId.value = shipmentRow?.cost_currency_id ?? null
 
       scannedItem.value = {
-        id: raw.id,
-        name: raw.name,
-        brand_name: raw.brand_name,
-        color: raw.color,
-        size: raw.size,
-        condition: raw.condition,
-        barcode: raw.barcode,
-        status: raw.status,
-        product_weight: raw.product_weight,
-        extra_weight: raw.extra_weight,
-        note: raw.note,
-        cost_of_goods_sold: pricing.cost_of_goods_sold ? parseFloat(pricing.cost_of_goods_sold) : 0,
-        target_price: pricing.target_price ? parseFloat(pricing.target_price) : 0,
-        listed_price: pricing.listed_price ? parseFloat(pricing.listed_price) : 0,
-        image_url: primaryImg?.image_url || '',
-        shelf_code: shelf.shelf_code || '',
-        shelf_name: shelf.name || '',
-        shipment_name: shipment.name || '',
-        box_name: box.name || ''
+        id: raw.id as number,
+        shipment_id: shipmentId,
+        name: (raw.name as string | null) ?? null,
+        brand_name: (raw.brand_name as string | null) ?? null,
+        color: (raw.color as string | null) ?? null,
+        size: (raw.size as string | null) ?? null,
+        condition: (raw.condition as string | null) ?? null,
+        barcode: (raw.barcode as string | null) ?? null,
+        status: (raw.status as string) || 'AVAILABLE',
+        product_weight: raw.product_weight != null ? Number(raw.product_weight) : null,
+        extra_weight: raw.extra_weight != null ? Number(raw.extra_weight) : null,
+        note: (raw.note as string | null) ?? null,
+        cost_of_goods_sold: Number(pricing.cost_of_goods_sold) || 0,
+        target_price: Number(pricing.target_price) || 0,
+        listed_price: Number(pricing.listed_price) || 0,
+        image_url: (primaryImg?.image_url as string) || '',
+        shelf_code: (shelf.shelf_code as string) || '',
+        shelf_name: (shelf.name as string) || '',
+        shipment_name: (shipment.name as string) || '',
+        box_name: (box.name as string) || '',
       }
     } else {
       scannedItem.value = null
     }
   } catch (err: unknown) {
     console.error('Lookup barcode error:', err)
-    const message = err instanceof Error ? err.message : 'Error querying stock catalog'
+    const message = err instanceof Error ? err.message : 'Lookup failed'
     $q.notify({ type: 'negative', message })
   } finally {
     searching.value = false
@@ -461,74 +465,65 @@ const clearResult = () => {
   scannedItem.value = null
   searchedBarcode.value = ''
   manualBarcode.value = ''
+  shipmentCostCurrencyId.value = null
 }
 
 const goToRegisterStock = () => {
-  // Pre-load the scanned barcode value into the store so it is ready on the Register Stock page!
   if (searchedBarcode.value) {
     thriftStore.setTempBarcode(searchedBarcode.value)
   }
   router.push('/register-stock')
 }
 
-// Helpers
+const goToStockDetail = () => {
+  if (scannedItem.value?.id) {
+    router.push({ name: 'stock-detail', params: { id: scannedItem.value.id } })
+  }
+}
+
+const openImagePreview = () => {
+  if (scannedItem.value?.image_url) {
+    imagePreviewOpen.value = true
+  }
+}
+
+const copyBarcode = (barcode: string | null) => {
+  if (!barcode) return
+  navigator.clipboard.writeText(barcode)
+  $q.notify({ type: 'positive', message: 'Barcode copied', timeout: 1000 })
+}
+
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'AVAILABLE': return 'positive'
-    case 'OUT_OF_STOCK': return 'grey-6'
-    case 'DAMAGED': return 'warning'
-    case 'STOLEN': return 'negative'
-    default: return 'primary'
+    case 'AVAILABLE':
+      return 'positive'
+    case 'OUT_OF_STOCK':
+      return 'grey-6'
+    case 'DAMAGED':
+      return 'warning'
+    case 'STOLEN':
+      return 'negative'
+    default:
+      return 'primary'
   }
 }
 
-const formatCondition = (cond: string) => {
-  return cond?.replace(/_/g, ' ') || ''
-}
-
-const getBadgeColor = (colorName: string) => {
-  const name = colorName?.toLowerCase().trim()
-  if (!name) return 'transparent'
-  
-  const map: Record<string, string> = {
-    black: '#000000',
-    white: '#ffffff',
-    red: '#ef4444',
-    blue: '#3b82f6',
-    green: '#10b981',
-    yellow: '#f59e0b',
-    orange: '#f97316',
-    purple: '#8b5cf6',
-    pink: '#ec4899',
-    grey: '#6b7280',
-    gray: '#6b7280',
-    brown: '#78350f',
-    navy: '#1e3a8a'
-  }
-  
-  return map[name] || '#9ca3af'
-}
+const formatCondition = (cond: string | null) => cond?.replace(/_/g, ' ') || ''
 </script>
 
 <style scoped>
-.border-bottom-light {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.scan-hero-placeholder {
+  aspect-ratio: 4 / 3;
 }
 
-.font-semibold {
-  font-weight: 600;
+.scan-price-tile {
+  background: rgb(var(--bw-theme-primary-rgb) / 0.06);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
 }
 
-.text-xxs {
-  font-size: 10px;
-  line-height: 12px;
-}
-
-.text-weight-mono {
-  font-family: monospace;
-}
-
-.letter-spacing-xs {
-  letter-spacing: 0.05em;
+.line-height-sm {
+  line-height: 1.2;
 }
 </style>

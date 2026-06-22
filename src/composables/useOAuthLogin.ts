@@ -250,6 +250,7 @@ export function useOAuthLogin() {
       },
       customerGroup: null,
       activeModuleKeys: bootstrap.active_module_keys ?? [],
+      tenantPreference: (bootstrap.tenant_preference ?? {}) as import('../stores/authStore').TenantPreferenceSchema,
       savedAt: new Date().toISOString(),
     })
 

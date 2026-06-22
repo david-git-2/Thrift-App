@@ -124,81 +124,9 @@
                 </span>
               </button>
 
-              <!-- Divider -->
-              <div class="auth-card__divider" aria-hidden="true">
-                <span>Or sign in with email</span>
-              </div>
-
-              <!-- Email/Password/OTP Login Form -->
-              <div class="q-px-lg q-gutter-y-sm">
-                <div>
-                  <q-input
-                    v-model="email"
-                    label="Email Address"
-                    outlined
-                    dense
-                    color="primary"
-                    placeholder="name@company.com"
-                    type="email"
-                    :disable="isLoading"
-                  />
-                </div>
-
-                <div v-if="!isOtpMode">
-                  <q-input
-                    v-model="password"
-                    label="Password"
-                    outlined
-                    dense
-                    color="primary"
-                    type="password"
-                    placeholder="••••••••"
-                    :disable="isLoading"
-                    @keyup.enter="onEmailSignIn"
-                  />
-                </div>
-
-                <div v-else-if="otpSent">
-                  <q-input
-                    v-model="otpCode"
-                    label="6-Digit Verification Code"
-                    outlined
-                    dense
-                    color="primary"
-                    placeholder="123456"
-                    mask="######"
-                    :disable="isLoading"
-                    @keyup.enter="onEmailSignIn"
-                  />
-                </div>
-
-                <q-btn
-                  color="primary"
-                  unelevated
-                  class="full-width q-py-sm q-mt-sm font-semibold text-subtitle2"
-                  no-caps
-                  :loading="isLoading"
-                  @click="onEmailSignIn"
-                >
-                  {{ isOtpMode ? (otpSent ? 'Verify & Sign In' : 'Send Verification Code') : 'Sign In' }}
-                </q-btn>
-
-                <div class="text-center q-mt-sm">
-                  <a
-                    href="javascript:void(0)"
-                    class="text-caption text-primary text-weight-bold"
-                    style="text-decoration: none;"
-                    @click="toggleMode"
-                  >
-                    {{ isOtpMode ? 'Sign in with Password instead' : 'Sign in with One-Time Verification Code instead' }}
-                  </a>
-                </div>
-              </div>
-
-              <!-- Security note -->
               <p class="auth-card__secure-note">
                 <q-icon name="lock" size="0.85rem" style="vertical-align: -2px;" />
-                Secured natively — we never store your password
+                Secured with Google sign-in
               </p>
             </section>
           </div>
@@ -211,33 +139,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useOAuthLogin } from '../composables/useOAuthLogin'
 import BrandMark from '../components/BrandMark.vue'
 
 const route = useRoute()
-const {
-  handleGoogleLogin,
-  handleEmailPasswordLogin,
-  handleSendOTP,
-  handleVerifyOTP,
-  isLoading
-} = useOAuthLogin()
-
-// Local inputs state
-const email = ref('')
-const password = ref('')
-const otpCode = ref('')
-const isOtpMode = ref(false)
-const otpSent = ref(false)
-const localErrorMessage = ref('')
+const { handleGoogleLogin, isLoading } = useOAuthLogin()
 
 const errorMessage = computed(() => {
-  if (localErrorMessage.value) {
-    return localErrorMessage.value
-  }
-
   const err = route.query.error
   if (err === 'no_membership') {
     return 'This account does not have permission for the Thrift workspace.'
@@ -256,54 +166,6 @@ const errorMessage = computed(() => {
 
 const onGoogleLogin = () => {
   handleGoogleLogin()
-}
-
-const toggleMode = () => {
-  isOtpMode.value = !isOtpMode.value
-  otpSent.value = false
-  otpCode.value = ''
-  localErrorMessage.value = ''
-}
-
-const onEmailSignIn = async () => {
-  localErrorMessage.value = ''
-  if (!email.value.trim()) {
-    localErrorMessage.value = 'Please enter your email address.'
-    return
-  }
-
-  if (isOtpMode.value) {
-    if (!otpSent.value) {
-      try {
-        const success = await handleSendOTP(email.value)
-        if (success) {
-          otpSent.value = true
-        }
-      } catch (err: any) {
-        localErrorMessage.value = err.message || 'Failed to send verification code.'
-      }
-    } else {
-      if (!otpCode.value.trim()) {
-        localErrorMessage.value = 'Please enter the 6-digit verification code.'
-        return
-      }
-      try {
-        await handleVerifyOTP(email.value, otpCode.value)
-      } catch (err: any) {
-        localErrorMessage.value = err.message || 'Invalid or expired verification code.'
-      }
-    }
-  } else {
-    if (!password.value) {
-      localErrorMessage.value = 'Please enter your password.'
-      return
-    }
-    try {
-      await handleEmailPasswordLogin(email.value, password.value)
-    } catch (err: any) {
-      localErrorMessage.value = err.message || 'Incorrect email or password.'
-    }
-  }
 }
 </script>
 

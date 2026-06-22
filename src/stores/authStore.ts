@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useTenantStore, clearTenantWorkspaceStorage } from './tenantStore'
+import { useThriftCurrencyStore } from './thriftCurrencyStore'
 
 export interface AuthUserSnapshot {
   id: string
@@ -30,6 +31,13 @@ export interface AuthTenantSnapshot {
   isActive: boolean
 }
 
+export interface TenantPreferenceSchema {
+  thrift?: {
+    default_purchase_currency?: number
+    default_cost_currency?: number
+  }
+}
+
 export interface AuthAccessSnapshot {
   scope: 'platform' | 'app' | 'shop'
   matchedRole: AuthMemberSnapshot['role']
@@ -38,6 +46,7 @@ export interface AuthAccessSnapshot {
   tenant: AuthTenantSnapshot | null
   customerGroup: null
   activeModuleKeys: string[]
+  tenantPreference: TenantPreferenceSchema
   savedAt: string
 }
 
@@ -56,10 +65,20 @@ const readStorage = (): StoredAuthAccess | null => {
     if (parsed?.schemaVersion !== 2 || !parsed?.user || !parsed?.member) {
       return null
     }
-    return parsed as StoredAuthAccess
+    return normalizeStoredAccess(parsed)
   } catch {
     return null
   }
+}
+
+const normalizeStoredAccess = (parsed: Partial<StoredAuthAccess>): StoredAuthAccess | null => {
+  if (parsed?.schemaVersion !== 2 || !parsed?.user || !parsed?.member) {
+    return null
+  }
+  return {
+    ...parsed,
+    tenantPreference: parsed.tenantPreference ?? {},
+  } as StoredAuthAccess
 }
 
 const writeStorage = (snapshot: StoredAuthAccess | null) => {
@@ -104,6 +123,17 @@ export const useAuthStore = defineStore('auth', () => {
       snapshot.value?.tenant?.slug ??
       null,
   )
+  const tenantPreference = computed(
+    () => snapshot.value?.tenantPreference ?? {},
+  )
+  const thriftDefaultCostCurrencyId = computed(() => {
+    const value = tenantPreference.value.thrift?.default_cost_currency
+    return typeof value === 'number' ? value : null
+  })
+  const thriftDefaultPurchaseCurrencyId = computed(() => {
+    const value = tenantPreference.value.thrift?.default_purchase_currency
+    return typeof value === 'number' ? value : null
+  })
 
   const saveAccess = (nextAccess: Omit<StoredAuthAccess, 'schemaVersion'>) => {
     snapshot.value = {
@@ -120,6 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
     snapshot.value = null
     writeStorage(null)
     clearTenantWorkspaceStorage()
+    useThriftCurrencyStore().resetCurrencies()
   }
 
   return {
@@ -137,6 +168,9 @@ export const useAuthStore = defineStore('auth', () => {
     tenant,
     tenantId,
     tenantSlug,
+    tenantPreference,
+    thriftDefaultCostCurrencyId,
+    thriftDefaultPurchaseCurrencyId,
     user,
     activeModuleKeys,
   }

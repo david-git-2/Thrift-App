@@ -1,0 +1,170 @@
+<template>
+  <div
+    class="smart-image-wrapper"
+    :class="[
+      imageHidden ? fallbackClass : imgClass,
+      { 'cursor-pointer': !imageHidden && enableLightbox },
+    ]"
+    @click="onWrapperClick"
+  >
+    <template v-if="!imageHidden">
+      <img
+        :src="currentImageSrc"
+        :alt="alt"
+        class="smart-image__img"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+        @error="handleImageError"
+      >
+    </template>
+
+    <template v-else>
+      <div class="smart-image__fallback">
+        No Image
+      </div>
+    </template>
+
+    <ImageLightbox
+      v-if="!imageHidden && enableLightbox"
+      v-model="lightboxOpen"
+      :src="currentImageSrc"
+      :alt="alt"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import ImageLightbox from './ImageLightbox.vue'
+
+const props = withDefaults(defineProps<{
+  src?: string | null | undefined
+  alt?: string
+  imgClass?: string
+  fallbackClass?: string
+  enableLightbox?: boolean
+}>(), {
+  src: '',
+  alt: 'Image',
+  imgClass: '',
+  fallbackClass: '',
+  enableLightbox: true,
+})
+
+const lightboxOpen = ref(false)
+
+const onWrapperClick = () => {
+  if (!imageHidden.value && props.enableLightbox) {
+    lightboxOpen.value = true
+  }
+}
+
+const openLightbox = () => {
+  if (!imageHidden.value && props.enableLightbox) {
+    lightboxOpen.value = true
+  }
+}
+
+defineExpose({ openLightbox })
+
+const fallbackImage =
+  'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 800 450%27%3E%3Crect width=%27800%27 height=%27450%27 fill=%27%23f3efe9%27/%3E%3Ctext x=%27400%27 y=%27228%27 text-anchor=%27middle%27 font-family=%27Arial, sans-serif%27 font-size=%2732%27 fill=%27%23746655%27%3ENo Image%3C/text%3E%3C/svg%3E'
+
+const imageAttempt = ref(0)
+const imageHidden = ref(false)
+
+const getDriveFileId = (url: string) => {
+  const m1 = url.match(/[?&]id=([^&]+)/)
+  const m2 = url.match(/\/file\/d\/([^/]+)/)
+  return m1?.[1] || m2?.[1] || null
+}
+
+const toDirectGoogleImageUrl = (url: string | null | undefined) => {
+  if (!url) return ''
+  const fileId = getDriveFileId(url)
+  if (!fileId) return url
+  return `https://lh3.googleusercontent.com/d/${fileId}`
+}
+
+const toProxyImageUrl = (url: string | null | undefined) => {
+  if (!url) return ''
+  const trimmed = url.trim()
+  if (!trimmed || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return trimmed
+
+  let parsed: URL
+  try {
+    parsed = new URL(trimmed)
+  } catch {
+    return trimmed
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return trimmed
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+  if (!supabaseUrl) return trimmed
+
+  return `${supabaseUrl}/functions/v1/image-proxy?url=${encodeURIComponent(trimmed)}`
+}
+
+const imageCandidates = computed(() => {
+  const original = props.src || ''
+  const direct = toDirectGoogleImageUrl(original)
+  const proxied = toProxyImageUrl(direct || original)
+  return [...new Set([proxied, direct, original, fallbackImage].filter(Boolean))]
+})
+
+const currentImageSrc = computed(() => {
+  return imageCandidates.value[imageAttempt.value] || fallbackImage
+})
+
+watch(
+  () => props.src,
+  () => {
+    imageAttempt.value = 0
+    imageHidden.value = false
+  },
+  { immediate: true },
+)
+
+const handleImageError = () => {
+  if (imageAttempt.value < imageCandidates.value.length - 1) {
+    imageAttempt.value += 1
+    return
+  }
+
+  imageHidden.value = true
+}
+</script>
+
+<style scoped>
+.smart-image-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.smart-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: inherit;
+  display: block;
+  border-radius: inherit;
+  transition: filter 0.25s ease;
+}
+
+.smart-image-wrapper.cursor-pointer:hover .smart-image__img {
+  filter: brightness(0.92);
+}
+
+.smart-image__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2f6;
+  color: #78909c;
+  border-radius: inherit;
+}
+</style>

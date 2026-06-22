@@ -12,9 +12,37 @@ function isUserCancel(err: unknown): boolean {
   return message.toLowerCase().includes('cancel') || message.toLowerCase().includes('dismiss')
 }
 
+function isLocalPhotoUri(uri: string): boolean {
+  return (
+    uri.startsWith('capacitor://') ||
+    uri.startsWith('file://') ||
+    uri.startsWith('content://')
+  )
+}
+
 async function uriToBlob(webPath: string): Promise<Blob> {
   const response = await fetch(webPath)
   return response.blob()
+}
+
+async function uriToBase64(uri: string): Promise<string> {
+  const blob = await uriToBlob(uri)
+  const buffer = await blob.arrayBuffer()
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!)
+  }
+  return btoa(binary)
+}
+
+function base64ToBlob(base64: string, mime = 'image/jpeg'): Blob {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new Blob([bytes], { type: mime })
 }
 
 export function useProductPhoto() {
@@ -51,16 +79,29 @@ export function useProductPhoto() {
     if (!Capacitor.isNativePlatform() || !webPath) return null
 
     try {
-      const result = await Camera.editURIPhoto({
-        uri: webPath,
-        saveToGallery: false,
-      })
+      if (isLocalPhotoUri(webPath)) {
+        const result = await Camera.editURIPhoto({
+          uri: webPath,
+          saveToGallery: false,
+        })
 
-      if (!result.webPath) return null
+        if (!result.webPath) return null
 
+        return {
+          webPath: result.webPath,
+          blob: await uriToBlob(result.webPath),
+        }
+      }
+
+      const base64 = await uriToBase64(webPath)
+      const { outputImage } = await Camera.editPhoto({ inputImage: base64 })
+
+      if (!outputImage) return null
+
+      const blob = base64ToBlob(outputImage)
       return {
-        webPath: result.webPath,
-        blob: await uriToBlob(result.webPath),
+        webPath: URL.createObjectURL(blob),
+        blob,
       }
     } catch (err) {
       if (isUserCancel(err)) return null

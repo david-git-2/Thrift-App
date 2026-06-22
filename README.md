@@ -2,6 +2,8 @@
 
 A Quasar + Capacitor mobile application for stock registration, barcode scanning, and lookup management.
 
+For architecture, data flows, and where to add features (AI + humans), see **[AI_ARCHITECTURE.md](./AI_ARCHITECTURE.md)**.
+
 ## Install the dependencies
 
 ```bash

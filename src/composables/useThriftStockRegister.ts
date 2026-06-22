@@ -18,9 +18,11 @@ export interface RegisterStockParams {
   extraWeight?: number | null
   note?: string
   originPurchasePrice?: number | null
+  extraOriginPurchaseExpense?: number | null
   costOfGoodsSold: number
   targetPrice: number
   listedPrice: number
+  extraExpenseCost?: number | null
   insertedBy: string
 }
 
@@ -127,9 +129,11 @@ export async function registerThriftStockFromApp(params: RegisterStockParams): P
     p_extra_weight: params.extraWeight ?? null,
     p_note: params.note ?? '',
     p_origin_purchase_price: params.originPurchasePrice ?? null,
+    p_extra_origin_purchase_expense: params.extraOriginPurchaseExpense ?? null,
     p_cost_of_goods_sold: params.costOfGoodsSold,
     p_target_price: params.targetPrice,
     p_listed_price: params.listedPrice,
+    p_extra_expense_cost: params.extraExpenseCost ?? null,
     p_inserted_by: params.insertedBy,
   })
 

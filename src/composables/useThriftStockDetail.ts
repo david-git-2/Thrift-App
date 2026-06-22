@@ -1,0 +1,219 @@
+import { supabase } from '../boot/supabase'
+
+export interface ThriftStockDetail {
+  id: number
+  tenant_id: number
+  shipment_id: number
+  box_id: number | null
+  category_id: number | null
+  type_id: number | null
+  shelf_id: number | null
+  name: string | null
+  brand_name: string | null
+  color: string | null
+  size: string | null
+  condition: string | null
+  section: string | null
+  barcode: string | null
+  status: string
+  product_weight: number | null
+  extra_weight: number | null
+  note: string | null
+  origin_purchase_price: number | null
+  extra_origin_purchase_expense: number | null
+  cost_of_goods_sold: number
+  target_price: number
+  listed_price: number
+  extra_expense_cost: number
+  image_url: string
+  shelf_code: string
+  shelf_name: string
+  shipment_name: string
+  box_name: string
+}
+
+function embedFirst<T extends Record<string, unknown>>(
+  value: T | T[] | null | undefined,
+): T {
+  if (value == null) return {} as T
+  if (Array.isArray(value)) return (value[0] ?? {}) as T
+  return value as T
+}
+
+function embedList<T extends Record<string, unknown>>(
+  value: T | T[] | null | undefined,
+): T[] {
+  if (value == null) return []
+  if (Array.isArray(value)) return value
+  return [value]
+}
+
+export async function fetchThriftStockById(
+  tenantId: number,
+  stockId: number,
+): Promise<ThriftStockDetail | null> {
+  const fullSelect = `
+        id,
+        tenant_id,
+        shipment_id,
+        box_id,
+        category_id,
+        type_id,
+        shelf_id,
+        name,
+        brand_name,
+        color,
+        size,
+        condition,
+        section,
+        barcode,
+        status,
+        product_weight,
+        extra_weight,
+        note,
+        origin_purchase_price,
+        extra_origin_purchase_expense,
+        thrift_pricings (
+          cost_of_goods_sold,
+          target_price,
+          listed_price,
+          extra_expense_cost
+        ),
+        thrift_stock_images (
+          image_url,
+          is_primary
+        ),
+        thrift_shelves (
+          shelf_code,
+          name
+        ),
+        thrift_shipments (
+          name
+        ),
+        thrift_boxes (
+          name
+        )
+      `
+
+  const minimalSelect = `
+        id,
+        tenant_id,
+        shipment_id,
+        box_id,
+        category_id,
+        type_id,
+        shelf_id,
+        name,
+        brand_name,
+        color,
+        size,
+        condition,
+        section,
+        barcode,
+        status,
+        product_weight,
+        extra_weight,
+        note,
+        thrift_pricings (
+          cost_of_goods_sold,
+          target_price,
+          listed_price
+        ),
+        thrift_stock_images (
+          image_url,
+          is_primary
+        ),
+        thrift_shelves (
+          shelf_code,
+          name
+        ),
+        thrift_shipments (
+          name
+        ),
+        thrift_boxes (
+          name
+        )
+      `
+
+  let data: Record<string, unknown> | null = null
+  let error: { message?: string } | null = null
+
+  const fullResult = await supabase
+    .from('thrift_stocks')
+    .select(fullSelect)
+    .eq('tenant_id', tenantId)
+    .eq('id', stockId)
+    .maybeSingle()
+
+  if (fullResult.error) {
+    console.warn('Full stock detail query failed, retrying minimal select:', fullResult.error)
+    const minimalResult = await supabase
+      .from('thrift_stocks')
+      .select(minimalSelect)
+      .eq('tenant_id', tenantId)
+      .eq('id', stockId)
+      .maybeSingle()
+    data = minimalResult.data as Record<string, unknown> | null
+    error = minimalResult.error
+  } else {
+    data = fullResult.data as Record<string, unknown> | null
+    error = fullResult.error
+  }
+
+  if (error) throw error
+  if (!data) return null
+
+  const raw = data
+  const pricing = embedFirst(
+    raw.thrift_pricings as Record<string, unknown> | Array<Record<string, unknown>> | null,
+  )
+  const imgs = embedList(
+    raw.thrift_stock_images as Record<string, unknown> | Array<Record<string, unknown>> | null,
+  )
+  const primaryImg = imgs.find((i) => i.is_primary) || imgs[0]
+  const shelf = embedFirst(
+    raw.thrift_shelves as Record<string, unknown> | Array<Record<string, unknown>> | null,
+  )
+  const shipment = embedFirst(
+    raw.thrift_shipments as Record<string, unknown> | Array<Record<string, unknown>> | null,
+  )
+  const box = embedFirst(
+    raw.thrift_boxes as Record<string, unknown> | Array<Record<string, unknown>> | null,
+  )
+
+  return {
+    id: raw.id as number,
+    tenant_id: raw.tenant_id as number,
+    shipment_id: raw.shipment_id as number,
+    box_id: (raw.box_id as number | null) ?? null,
+    category_id: (raw.category_id as number | null) ?? null,
+    type_id: (raw.type_id as number | null) ?? null,
+    shelf_id: (raw.shelf_id as number | null) ?? null,
+    name: (raw.name as string | null) ?? null,
+    brand_name: (raw.brand_name as string | null) ?? null,
+    color: (raw.color as string | null) ?? null,
+    size: (raw.size as string | null) ?? null,
+    condition: (raw.condition as string | null) ?? null,
+    section: (raw.section as string | null) ?? null,
+    barcode: (raw.barcode as string | null) ?? null,
+    status: (raw.status as string) || 'AVAILABLE',
+    product_weight: raw.product_weight != null ? Number(raw.product_weight) : null,
+    extra_weight: raw.extra_weight != null ? Number(raw.extra_weight) : null,
+    note: (raw.note as string | null) ?? null,
+    origin_purchase_price:
+      raw.origin_purchase_price != null ? Number(raw.origin_purchase_price) : null,
+    extra_origin_purchase_expense:
+      raw.extra_origin_purchase_expense != null
+        ? Number(raw.extra_origin_purchase_expense)
+        : null,
+    cost_of_goods_sold: Number(pricing.cost_of_goods_sold) || 0,
+    target_price: Number(pricing.target_price) || 0,
+    listed_price: Number(pricing.listed_price) || 0,
+    extra_expense_cost: Number(pricing.extra_expense_cost) || 0,
+    image_url: (primaryImg?.image_url as string) || '',
+    shelf_code: (shelf.shelf_code as string) || '',
+    shelf_name: (shelf.name as string) || '',
+    shipment_name: (shipment.name as string) || '',
+    box_name: (box.name as string) || '',
+  }
+}

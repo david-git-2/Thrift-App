@@ -54,5 +54,5 @@
   "engines": {
     "node": ">= 26 || ^24 || ^22.12"
   },
-  "productName": "Thrift app"
+  "productName": "Thrift App"
 }

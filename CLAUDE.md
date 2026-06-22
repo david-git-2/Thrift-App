@@ -209,32 +209,35 @@ If a response exceeds 800 tokens, pause and ask: _"Is all of this necessary?"_
 
 ## PROJECT-SPECIFIC NOTES
 
-> ⬇️ Fill in the section below for your project. These are loaded every session
-> and produce the highest ROI of any single change you can make.
+### Thrift App (`Thrift-app/`)
+
+**Architecture map:** [AI_ARCHITECTURE.md](./AI_ARCHITECTURE.md) — read before exploring; update changelog when shipping features.
 
 ### Stack
-- Language:
-- Framework:
-- Database:
-- Auth:
-- Infra:
+- Language: TypeScript
+- Framework: Vue 3 + Quasar 2 + Capacitor 8
+- Database: Supabase (Postgres RPCs)
+- Auth: Supabase Auth + Google OAuth deep link
+- Infra: Cloudinary (stock images)
 
 ### Conventions
-- State management pattern:
-- API layer pattern (REST/tRPC/GraphQL):
-- File naming convention:
-- Test framework:
+- State management: Pinia (`authStore`, `thriftStore`)
+- API layer: composables in `src/composables/useThrift*.ts` (direct Supabase)
+- File naming: PascalCase pages, camelCase composables
+- DB enums: `src/constants/thriftEnums.ts`
 
 ### Key paths
-- Entry point:
-- Config:
-- Types/interfaces:
-- Shared utilities:
+- Entry point: `src/App.vue`, `src/router/routes.ts`
+- Config: `quasar.config.ts`, `.env` (`VITE_*`)
+- Architecture doc: `AI_ARCHITECTURE.md`
+- Register stock: `src/pages/RegisterStock.vue`
 
 ### Do NOT touch
-- (list files or folders that are off-limits)
+- `src-capacitor/android/` build artifacts unless building native
+- `src/stores/example-store.ts` (template)
 
 ### Known shortcuts
-- (e.g., "use `useApiQuery` instead of raw `fetch`")
-- (e.g., "all DB calls go through `src/db/client.ts`")
-- (e.g., "auth checks via `requireUser()` in `src/auth/guard.ts`")
+- Stock register RPC: `registerThriftStockFromApp` in `useThriftStockRegister.ts`
+- Barcode validate: `validateBarcodeForRegistration` in `useThriftBarcode.ts`
+- Currency lookup: `currencyById` in `useThriftCurrency.ts`
+- Type icons: `resolveTypeIcon` in `src/utils/typeIcon.ts`
