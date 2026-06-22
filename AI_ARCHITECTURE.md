@@ -10,7 +10,7 @@
 | State | Pinia + `localStorage` (workflow persistence) |
 | Native | Capacitor 8 (camera, barcode ML Kit) |
 | Backend | Supabase (Postgres + RLS + RPCs) |
-| Images | Cloudinary upload preset |
+| Images | Cloudinary upload preset + `cloudinary-delete` edge function |
 
 ## Directory map
 
@@ -20,7 +20,7 @@
 | `src/composables/` | API calls, device logic (no UI) |
 | `src/stores/` | Cross-page session/workflow state |
 | `src/constants/` | DB enum option lists shared by pages |
-| `src/utils/` | Pure helpers (barcode, icons) |
+| `src/utils/` | Pure helpers (barcode, icons, Cloudinary client) |
 | `src/boot/supabase.ts` | Supabase client |
 | `src/router/routes.ts` | Route table |
 
@@ -104,6 +104,7 @@ flowchart LR
 | File | Purpose |
 |------|---------|
 | `useThriftStockRegister.ts` | Cloudinary upload + `register_thrift_stock_from_app` RPC |
+| `utils/cloudinaryClient.ts` | Cloudinary upload, `delete_by_token` (session orphans), edge-function delete (persisted images) |
 | `useThriftCatalog.ts` | Categories, types, shelves, default purchase price |
 | `useThriftCurrency.ts` | Load `thrift_currencies`, `currencyById()` lookup |
 | `useThriftBarcode.ts` | Barcode validation for registration |
@@ -135,8 +136,16 @@ See [UI_CONSISTENCY_GUIDE.md](./UI_CONSISTENCY_GUIDE.md). App-specific classes: 
 | `VITE_CLOUDINARY_CLOUD_NAME` | Image upload |
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Unsigned upload preset |
 
+Supabase Edge Function `cloudinary-delete` (deployed on shared backend) deletes persisted thrift images. Set secrets in Supabase dashboard: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+
+### Cloudinary cleanup rules
+
+- **Stock delete / image replace / image remove (save):** `deleteCloudinaryImage(url)` via edge function
+- **In-session orphan uploads (cancel, failed save):** `deleteCloudinaryByToken(token)` client-side
+
 ## Feature changelog
 
 _Update this section when shipping features._
 
+- **2026-06-22** — Cloudinary lifecycle cleanup: `cloudinaryClient.ts`; delete persisted images on stock delete (Quasar), image replace/crop/remove; rollback in-session uploads via `delete_token`.
 - **2026-06-21** — Register Stock: required brand/condition/weight; section/condition DB enums; type/category dropdown icons; purchase vs cost currency groups; expense fields (`extra_origin_purchase_expense`, `extra_expense_cost`); `useThriftCurrency`, `thriftEnums.ts`, `typeIcon.ts`; shipment currency IDs on `SelectedShipment`.

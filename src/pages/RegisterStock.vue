@@ -515,6 +515,7 @@ import {
   registerThriftStockFromApp,
   uploadToCloudinary,
 } from '../composables/useThriftStockRegister'
+import { deleteCloudinaryByToken } from '../utils/cloudinaryClient'
 import {
   validateBarcodeForRegistration,
   type BarcodeAvailability,
@@ -852,15 +853,17 @@ const submitStock = async () => {
 
   submitting.value = true
 
+  let pendingDeleteToken = ''
   try {
     const imgName = `stock_${tempBarcode.value}.jpg`
-    const uploadedUrl = await uploadToCloudinary(webBlob.value, imgName)
+    const uploadResult = await uploadToCloudinary(webBlob.value, imgName)
+    pendingDeleteToken = uploadResult.deleteToken || ''
 
     await registerThriftStockFromApp({
       tenantId: tenantId.value,
       barcode: tempBarcode.value,
       shipmentId: selectedShipment.value.id,
-      imageUrl: uploadedUrl,
+      imageUrl: uploadResult.secureUrl,
       brandName: form.value.brand_name || null,
       categoryId: form.value.category_id,
       typeId: form.value.type_id,
@@ -904,6 +907,9 @@ const submitStock = async () => {
     extraOriginPurchaseExpense.value = 0
 
   } catch (err: any) {
+    if (pendingDeleteToken) {
+      await deleteCloudinaryByToken(pendingDeleteToken)
+    }
     console.error('Error saving thrift stock:', err)
     $q.notify({
       type: 'negative',

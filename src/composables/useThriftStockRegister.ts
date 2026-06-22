@@ -1,5 +1,8 @@
 import { supabase } from '../boot/supabase'
 
+export type { CloudinaryUploadResult } from '../utils/cloudinaryClient'
+export { uploadToCloudinary } from '../utils/cloudinaryClient'
+
 export interface RegisterStockParams {
   tenantId: number
   barcode: string
@@ -24,90 +27,6 @@ export interface RegisterStockParams {
   listedPrice: number
   extraExpenseCost?: number | null
   insertedBy: string
-}
-
-function resizeImage(fileOrBlob: File | Blob): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(fileOrBlob)
-    reader.onload = (event) => {
-      const img = new Image()
-      img.src = event.target?.result as string
-      img.onload = () => {
-        let width = img.width
-        let height = img.height
-        const maxWidth = 1200
-        const maxHeight = 1200
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width)
-            width = maxWidth
-          }
-        } else if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height)
-          height = maxHeight
-        }
-
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
-          reject(new Error('Failed to get 2D context'))
-          return
-        }
-
-        ctx.drawImage(img, 0, 0, width, height)
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob)
-            else reject(new Error('Canvas toBlob failed'))
-          },
-          'image/jpeg',
-          0.85,
-        )
-      }
-      img.onerror = () => reject(new Error('Failed to load image into object'))
-    }
-    reader.onerror = () => reject(new Error('Failed to read file source'))
-  })
-}
-
-export async function uploadToCloudinary(blob: Blob, name: string): Promise<string> {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-
-  if (!cloudName || !uploadPreset) {
-    throw new Error('Cloudinary environment configuration missing.')
-  }
-
-  let imageToUpload = blob
-  try {
-    imageToUpload = await resizeImage(blob)
-  } catch (err) {
-    console.warn('Resize failed, uploading original blob instead', err)
-  }
-
-  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
-  const formData = new FormData()
-  formData.append('file', imageToUpload, name)
-  formData.append('upload_preset', uploadPreset)
-  formData.append('folder', 'thrift_stocks')
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  })
-
-  if (!response.ok) {
-    const errObj = await response.json()
-    throw new Error(errObj.error?.message || 'Upload HTTP request failed')
-  }
-
-  const resData = await response.json()
-  return resData.secure_url as string
 }
 
 export async function registerThriftStockFromApp(params: RegisterStockParams): Promise<number> {

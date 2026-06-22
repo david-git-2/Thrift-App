@@ -344,6 +344,10 @@ import { useAuthStore } from '../stores/authStore'
 import { useProductPhoto } from '../composables/useProductPhoto'
 import { uploadToCloudinary } from '../composables/useThriftStockRegister'
 import {
+  deleteCloudinaryByToken,
+  deleteCloudinaryImage,
+} from '../utils/cloudinaryClient'
+import {
   fetchThriftCategories,
   fetchThriftShelves,
   fetchThriftTypes,
@@ -624,16 +628,20 @@ const loadStock = async () => {
 const saveStock = async () => {
   if (!stock.value) return
   saving.value = true
+  let pendingDeleteToken = ''
   try {
     let imageUrl: string | null | undefined
 
     if (webBlob.value) {
       const imgName = `stock-${stock.value.id}-${Date.now()}`
-      imageUrl = await uploadToCloudinary(webBlob.value, imgName)
+      const uploadResult = await uploadToCloudinary(webBlob.value, imgName)
+      imageUrl = uploadResult.secureUrl
+      pendingDeleteToken = uploadResult.deleteToken || ''
     } else if (imageRemoved.value && originalImageUrl.value) {
       imageUrl = null
     }
 
+    const previousImageUrl = originalImageUrl.value
     const updateParams: Parameters<typeof updateThriftStock>[0] = {
       stockId: stock.value.id,
       stock: {
@@ -661,9 +669,20 @@ const saveStock = async () => {
     }
 
     await updateThriftStock(updateParams)
+
+    if (imageUrl !== undefined && previousImageUrl) {
+      const savedUrl = imageUrl || ''
+      if (!savedUrl || savedUrl !== previousImageUrl) {
+        await deleteCloudinaryImage(previousImageUrl)
+      }
+    }
+
     $q.notify({ type: 'positive', message: 'Stock updated' })
     goBack()
   } catch (err) {
+    if (pendingDeleteToken) {
+      await deleteCloudinaryByToken(pendingDeleteToken)
+    }
     const message = err instanceof Error ? err.message : 'Save failed'
     $q.notify({ type: 'negative', message })
   } finally {
