@@ -247,6 +247,10 @@ const selectedShipment = computed(() => thriftStore.selectedShipment)
 const selectedBox = computed(() => thriftStore.selectedBox)
 const tenantId = computed(() => authStore.tenantId)
 
+const goToRegistration = () => {
+  router.push('/register-stock')
+}
+
 const openSelector = async () => {
   thriftStore.clearShipmentBox()
   tempShipment.value = null
@@ -375,10 +379,6 @@ const onConfirm = () => {
   thriftStore.setSelection(tempShipment.value, tempBox.value)
   dialogOpen.value = false
   goToRegistration()
-}
-
-const goToRegistration = () => {
-  router.push('/register-stock')
 }
 </script>
 

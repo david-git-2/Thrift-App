@@ -2,12 +2,19 @@ import { supabase } from '../boot/supabase'
 
 export type { CloudinaryUploadResult } from '../utils/cloudinaryClient'
 export { uploadToCloudinary } from '../utils/cloudinaryClient'
+export {
+  uploadStockImage,
+  cleanupStockImageAssets,
+  StockImageDuplicateError,
+  type StockImageUploadResult,
+} from '../utils/stockImageClient'
 
 export interface RegisterStockParams {
   tenantId: number
   barcode: string
   shipmentId: number
   imageUrl: string
+  driveFileId?: string | null
   brandName?: string | null
   categoryId?: number | null
   typeId?: number | null
@@ -57,5 +64,24 @@ export async function registerThriftStockFromApp(params: RegisterStockParams): P
   })
 
   if (error) throw error
-  return data as number
+  const stockId = data as number
+
+  if (params.driveFileId) {
+    await attachDriveFileIdToStock(stockId, params.driveFileId)
+  }
+
+  return stockId
+}
+
+export async function attachDriveFileIdToStock(
+  stockId: number,
+  driveFileId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('thrift_stock_images')
+    .update({ drive_file_id: driveFileId })
+    .eq('stock_id', stockId)
+    .eq('is_primary', true)
+
+  if (error) throw error
 }

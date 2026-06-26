@@ -342,11 +342,12 @@ import { useQuasar } from 'quasar'
 import { Capacitor } from '@capacitor/core'
 import { useAuthStore } from '../stores/authStore'
 import { useProductPhoto } from '../composables/useProductPhoto'
-import { uploadToCloudinary } from '../composables/useThriftStockRegister'
 import {
-  deleteCloudinaryByToken,
-  deleteCloudinaryImage,
-} from '../utils/cloudinaryClient'
+  uploadStockImage,
+  cleanupStockImageAssets,
+  type StockImageUploadResult,
+} from '../utils/stockImageClient'
+import { deleteCloudinaryByToken } from '../utils/cloudinaryClient'
 import {
   fetchThriftCategories,
   fetchThriftShelves,
@@ -382,6 +383,7 @@ const previewWebPath = ref('')
 const webBlob = ref<Blob | null>(null)
 const imageRemoved = ref(false)
 const originalImageUrl = ref('')
+const originalDriveFileId = ref('')
 const shipmentCostCurrencyId = ref<number | null>(null)
 const shipmentPurchaseCurrencyId = ref<number | null>(null)
 
@@ -445,12 +447,13 @@ function revokePreviewUrl() {
   }
 }
 
-function resetImageEditState(imageUrl: string) {
+function resetImageEditState(imageUrl: string, driveFileId = '') {
   revokePreviewUrl()
   previewWebPath.value = ''
   webBlob.value = null
   imageRemoved.value = false
   originalImageUrl.value = imageUrl || ''
+  originalDriveFileId.value = driveFileId || ''
 }
 
 const goBack = () => {
@@ -495,7 +498,7 @@ const populateForm = (detail: ThriftStockDetail) => {
   }
   originPurchasePrice.value = detail.origin_purchase_price ?? 0
   extraOriginPurchaseExpense.value = detail.extra_origin_purchase_expense ?? 0
-  resetImageEditState(detail.image_url)
+  resetImageEditState(detail.image_url, detail.drive_file_id)
 }
 
 const startCameraCapture = async () => {
@@ -629,19 +632,39 @@ const saveStock = async () => {
   if (!stock.value) return
   saving.value = true
   let pendingDeleteToken = ''
+  let orphanUpload: StockImageUploadResult | null = null
   try {
     let imageUrl: string | null | undefined
+    let driveFilePayload: string | null | undefined
 
     if (webBlob.value) {
-      const imgName = `stock-${stock.value.id}-${Date.now()}`
-      const uploadResult = await uploadToCloudinary(webBlob.value, imgName)
-      imageUrl = uploadResult.secureUrl
-      pendingDeleteToken = uploadResult.deleteToken || ''
+      const barcode = stock.value.barcode?.trim()
+      const tenantId = authStore.tenantId
+      if (!barcode) {
+        throw new Error('Barcode is required before uploading an image.')
+      }
+      if (!tenantId) {
+        throw new Error('Workspace is required before uploading an image.')
+      }
+
+      const uploaded = await uploadStockImage(webBlob.value, {
+        barcode,
+        shipmentId: stock.value.shipment_id,
+        tenantId,
+        stockId: stock.value.id,
+        replaceImageUrl: originalImageUrl.value,
+      })
+      orphanUpload = uploaded
+      imageUrl = uploaded.secureUrl
+      driveFilePayload = null
+      pendingDeleteToken = uploaded.deleteToken || ''
     } else if (imageRemoved.value && originalImageUrl.value) {
       imageUrl = null
+      driveFilePayload = null
     }
 
     const previousImageUrl = originalImageUrl.value
+    const previousDriveFileId = originalDriveFileId.value
     const updateParams: Parameters<typeof updateThriftStock>[0] = {
       stockId: stock.value.id,
       stock: {
@@ -666,21 +689,29 @@ const saveStock = async () => {
 
     if (imageUrl !== undefined) {
       updateParams.imageUrl = imageUrl
+      updateParams.driveFileId = driveFilePayload ?? null
     }
 
     await updateThriftStock(updateParams)
 
-    if (imageUrl !== undefined && previousImageUrl) {
+    if (imageUrl !== undefined && (previousImageUrl || previousDriveFileId)) {
       const savedUrl = imageUrl || ''
       if (!savedUrl || savedUrl !== previousImageUrl) {
-        await deleteCloudinaryImage(previousImageUrl)
+        await cleanupStockImageAssets({
+          imageUrl: previousImageUrl,
+        })
       }
     }
 
+    orphanUpload = null
     $q.notify({ type: 'positive', message: 'Stock updated' })
     goBack()
   } catch (err) {
-    if (pendingDeleteToken) {
+    if (orphanUpload) {
+      await cleanupStockImageAssets({
+        imageUrl: orphanUpload.secureUrl,
+      })
+    } else if (pendingDeleteToken) {
       await deleteCloudinaryByToken(pendingDeleteToken)
     }
     const message = err instanceof Error ? err.message : 'Save failed'

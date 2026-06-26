@@ -1,4 +1,5 @@
 import { supabase } from '../boot/supabase'
+import { buildBarcodeCandidates } from '../utils/barcodeCandidates'
 
 export interface ThriftStockDetail {
   id: number
@@ -26,6 +27,7 @@ export interface ThriftStockDetail {
   listed_price: number
   extra_expense_cost: number
   image_url: string
+  drive_file_id: string
   shelf_code: string
   shelf_name: string
   shipment_name: string
@@ -46,6 +48,31 @@ function embedList<T extends Record<string, unknown>>(
   if (value == null) return []
   if (Array.isArray(value)) return value
   return [value]
+}
+
+function pickPrimaryImage(
+  imgs: Array<Record<string, unknown>>,
+): Record<string, unknown> | undefined {
+  return (
+    imgs.find((i) => i.is_primary === true) ||
+    imgs.find((i) => typeof i.image_url === 'string' && i.image_url.trim()) ||
+    imgs[0]
+  )
+}
+
+async function fetchPrimaryStockImageUrl(stockId: number): Promise<string> {
+  const { data, error } = await supabase
+    .from('thrift_stock_images')
+    .select('image_url, is_primary')
+    .eq('stock_id', stockId)
+
+  if (error) {
+    console.warn('Direct stock image query failed:', error)
+    return ''
+  }
+
+  const primaryImg = pickPrimaryImage(embedList(data as Array<Record<string, unknown>> | null))
+  return typeof primaryImg?.image_url === 'string' ? primaryImg.image_url.trim() : ''
 }
 
 export async function fetchThriftStockById(
@@ -81,6 +108,7 @@ export async function fetchThriftStockById(
         ),
         thrift_stock_images (
           image_url,
+          drive_file_id,
           is_primary
         ),
         thrift_shelves (
@@ -121,6 +149,7 @@ export async function fetchThriftStockById(
         ),
         thrift_stock_images (
           image_url,
+          drive_file_id,
           is_primary
         ),
         thrift_shelves (
@@ -170,7 +199,7 @@ export async function fetchThriftStockById(
   const imgs = embedList(
     raw.thrift_stock_images as Record<string, unknown> | Array<Record<string, unknown>> | null,
   )
-  const primaryImg = imgs.find((i) => i.is_primary) || imgs[0]
+  const primaryImg = pickPrimaryImage(imgs)
   const shelf = embedFirst(
     raw.thrift_shelves as Record<string, unknown> | Array<Record<string, unknown>> | null,
   )
@@ -180,6 +209,13 @@ export async function fetchThriftStockById(
   const box = embedFirst(
     raw.thrift_boxes as Record<string, unknown> | Array<Record<string, unknown>> | null,
   )
+
+  let imageUrl = typeof primaryImg?.image_url === 'string' ? primaryImg.image_url.trim() : ''
+  const driveFileId = typeof primaryImg?.drive_file_id === 'string' ? primaryImg.drive_file_id.trim() : ''
+
+  if (!imageUrl) {
+    imageUrl = await fetchPrimaryStockImageUrl(stockId)
+  }
 
   return {
     id: raw.id as number,
@@ -210,10 +246,37 @@ export async function fetchThriftStockById(
     target_price: Number(pricing.target_price) || 0,
     listed_price: Number(pricing.listed_price) || 0,
     extra_expense_cost: Number(pricing.extra_expense_cost) || 0,
-    image_url: (primaryImg?.image_url as string) || '',
+    image_url: imageUrl,
+    drive_file_id: driveFileId,
     shelf_code: (shelf.shelf_code as string) || '',
     shelf_name: (shelf.name as string) || '',
     shipment_name: (shipment.name as string) || '',
     box_name: (box.name as string) || '',
   }
+}
+
+export async function fetchThriftStockByBarcode(
+  tenantId: number,
+  barcode: string,
+): Promise<ThriftStockDetail | null> {
+  const trimmed = barcode.trim()
+  if (!trimmed) return null
+
+  const candidates = [...new Set([trimmed, ...buildBarcodeCandidates(tenantId, trimmed)])]
+
+  for (const candidate of candidates) {
+    const { data, error } = await supabase
+      .from('thrift_stocks')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('barcode', candidate)
+      .maybeSingle()
+
+    if (error) throw error
+    if (data?.id) {
+      return fetchThriftStockById(tenantId, data.id as number)
+    }
+  }
+
+  return null
 }

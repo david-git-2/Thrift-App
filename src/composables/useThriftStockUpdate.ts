@@ -26,6 +26,7 @@ export interface UpdateThriftStockParams {
     extra_expense_cost?: number
   }
   imageUrl?: string | null
+  driveFileId?: string | null
   insertedBy: string
 }
 
@@ -33,6 +34,7 @@ async function upsertPrimaryStockImage(
   stockId: number,
   imageUrl: string,
   insertedBy: string,
+  driveFileId?: string | null,
 ): Promise<void> {
   const { data: existing, error: fetchError } = await supabase
     .from('thrift_stock_images')
@@ -46,7 +48,10 @@ async function upsertPrimaryStockImage(
   if (existing?.id) {
     const { error } = await supabase
       .from('thrift_stock_images')
-      .update({ image_url: imageUrl })
+      .update({
+        image_url: imageUrl,
+        drive_file_id: driveFileId ?? null,
+      })
       .eq('id', existing.id)
     if (error) throw error
     return
@@ -55,6 +60,7 @@ async function upsertPrimaryStockImage(
   const { error } = await supabase.from('thrift_stock_images').insert({
     stock_id: stockId,
     image_url: imageUrl,
+    drive_file_id: driveFileId ?? null,
     is_primary: true,
     inserted_by: insertedBy,
   })
@@ -99,7 +105,12 @@ export async function updateThriftStock(params: UpdateThriftStockParams): Promis
 
   if (params.imageUrl !== undefined) {
     if (params.imageUrl) {
-      await upsertPrimaryStockImage(params.stockId, params.imageUrl, insertedBy)
+      await upsertPrimaryStockImage(
+        params.stockId,
+        params.imageUrl,
+        insertedBy,
+        params.driveFileId,
+      )
     } else {
       await deletePrimaryStockImage(params.stockId)
     }

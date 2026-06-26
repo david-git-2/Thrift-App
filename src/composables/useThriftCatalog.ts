@@ -44,16 +44,16 @@ export async function fetchThriftShelves(tenantId: number): Promise<ThriftShelfO
   return (data || []) as ThriftShelfOption[]
 }
 
-export async function fetchThriftDefaultPurchasePriceGbp(
+export async function fetchThriftDefaultOriginPurchasePrice(
   tenantId: number,
 ): Promise<number | null> {
   const { data, error } = await supabase
     .from('thrift_settings')
-    .select('default_purchase_price_gbp')
+    .select('default_origin_purchase_price')
     .eq('tenant_id', tenantId)
     .maybeSingle()
 
   if (error) throw error
-  if (!data?.default_purchase_price_gbp) return null
-  return Number(data.default_purchase_price_gbp) || null
+  if (data?.default_origin_purchase_price == null) return null
+  return Number(data.default_origin_purchase_price) || null
 }

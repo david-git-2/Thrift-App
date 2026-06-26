@@ -6,7 +6,9 @@ import { useTenantStore } from '../stores/tenantStore'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
 
-export const THRIFT_TENANT_SLUG = 'thrift'
+import { THRIFT_TENANT_SLUG } from '../constants/thriftTenant'
+
+export { THRIFT_TENANT_SLUG }
 
 const normalizeTenantSlug = (value: string | null | undefined) =>
   value?.trim().toLowerCase() || null

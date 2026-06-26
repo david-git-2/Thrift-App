@@ -36,6 +36,7 @@
               <div class="app-section-title">
                 <q-icon name="qr_code" />
                 Barcode Identification
+                <span v-if="!tempBarcode" class="app-section-title__required-badge">Required</span>
               </div>
 
               <!-- Barcode Display / Scan Button -->
@@ -70,7 +71,7 @@
                 <PageInitialLoader compact message="Checking barcode..." />
               </div>
 
-              <div v-else class="q-py-sm q-gutter-y-sm">
+              <div v-else class="q-py-sm q-gutter-y-sm app-capture-zone app-capture-zone--required">
                 <q-btn
                   color="primary"
                   unelevated
@@ -117,6 +118,7 @@
               <div class="app-section-title">
                 <q-icon name="photo_camera" />
                 Product Image
+                <span v-if="!previewImageUrl" class="app-section-title__required-badge">Required</span>
               </div>
 
               <!-- Image Display / Capture Button -->
@@ -145,7 +147,7 @@
                 />
               </div>
 
-              <div v-else class="text-center q-py-lg">
+              <div v-else class="text-center q-py-lg app-capture-zone app-capture-zone--required">
                 <q-btn
                   color="primary"
                   unelevated
@@ -173,16 +175,24 @@
             </q-card-section>
 
             <q-card-section class="q-gutter-y-md">
+            <div class="app-required-hint">
+              <q-icon name="info" />
+              Fields marked with <span class="app-field-label__mark">*</span> are required
+            </div>
             <q-form ref="stockFormRef" class="q-gutter-y-md">
               <div class="row q-col-gutter-sm">
                 <!-- Brand -->
                 <div class="col-12">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Brand Name *</label>
+                  <label class="app-field-label app-field-label--required block q-mb-xs">
+                    Brand Name <span class="app-field-label__mark">*</span>
+                  </label>
                   <q-input
                     v-model="form.brand_name"
                     outlined
                     dense
                     placeholder="e.g. Nike"
+                    class="app-required-input"
+                    :class="{ 'app-required-input--pending': !form.brand_name?.trim() }"
                     :rules="[val => !!val?.trim() || 'Required']"
                   />
                 </div>
@@ -314,12 +324,16 @@
 
               <!-- Condition -->
               <div>
-                <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Condition *</label>
+                <label class="app-field-label app-field-label--required block q-mb-xs">
+                  Condition <span class="app-field-label__mark">*</span>
+                </label>
                 <q-select
                   v-model="form.condition"
                   :options="THRIFT_CONDITION_OPTIONS"
                   outlined
                   dense
+                  class="app-required-input"
+                  :class="{ 'app-required-input--pending': !form.condition }"
                   :rules="[val => !!val || 'Required']"
                 />
               </div>
@@ -327,7 +341,9 @@
               <!-- Weights -->
               <div class="row q-col-gutter-sm">
                 <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Product Weight (g) *</label>
+                  <label class="app-field-label app-field-label--required block q-mb-xs">
+                    Product Weight (g) <span class="app-field-label__mark">*</span>
+                  </label>
                   <q-input
                     v-model.number="form.product_weight"
                     type="number"
@@ -336,6 +352,8 @@
                     outlined
                     dense
                     placeholder="e.g. 250"
+                    class="app-required-input"
+                    :class="{ 'app-required-input--pending': form.product_weight == null || form.product_weight <= 0 }"
                     :rules="[val => val != null && val > 0 || 'Required']"
                   />
                 </div>
@@ -513,7 +531,9 @@ import { useBarcodeScan } from '../composables/useBarcodeScan'
 import { useProductPhoto } from '../composables/useProductPhoto'
 import {
   registerThriftStockFromApp,
-  uploadToCloudinary,
+  uploadStockImage,
+  cleanupStockImageAssets,
+  type StockImageUploadResult,
 } from '../composables/useThriftStockRegister'
 import { deleteCloudinaryByToken } from '../utils/cloudinaryClient'
 import {
@@ -522,7 +542,7 @@ import {
 } from '../composables/useThriftBarcode'
 import {
   fetchThriftCategories,
-  fetchThriftDefaultPurchasePriceGbp,
+  fetchThriftDefaultOriginPurchasePrice,
   fetchThriftShelves,
   fetchThriftTypes,
   type ThriftCatalogOption,
@@ -704,7 +724,7 @@ const loadDropdowns = async () => {
 const loadTenantSettings = async () => {
   if (!tenantId.value) return
   try {
-    const defaultPrice = await fetchThriftDefaultPurchasePriceGbp(tenantId.value)
+    const defaultPrice = await fetchThriftDefaultOriginPurchasePrice(tenantId.value)
     if (defaultPrice !== null) {
       form.value.origin_purchase_price = defaultPrice
     }
@@ -854,9 +874,13 @@ const submitStock = async () => {
   submitting.value = true
 
   let pendingDeleteToken = ''
+  let uploadResult: StockImageUploadResult | null = null
   try {
-    const imgName = `stock_${tempBarcode.value}.jpg`
-    const uploadResult = await uploadToCloudinary(webBlob.value, imgName)
+    uploadResult = await uploadStockImage(webBlob.value, {
+      barcode: tempBarcode.value,
+      shipmentId: selectedShipment.value.id,
+      tenantId: tenantId.value,
+    })
     pendingDeleteToken = uploadResult.deleteToken || ''
 
     await registerThriftStockFromApp({
@@ -864,6 +888,7 @@ const submitStock = async () => {
       barcode: tempBarcode.value,
       shipmentId: selectedShipment.value.id,
       imageUrl: uploadResult.secureUrl,
+      driveFileId: null,
       brandName: form.value.brand_name || null,
       categoryId: form.value.category_id,
       typeId: form.value.type_id,
@@ -907,7 +932,11 @@ const submitStock = async () => {
     extraOriginPurchaseExpense.value = 0
 
   } catch (err: any) {
-    if (pendingDeleteToken) {
+    if (uploadResult) {
+      await cleanupStockImageAssets({
+        imageUrl: uploadResult.secureUrl,
+      })
+    } else if (pendingDeleteToken) {
       await deleteCloudinaryByToken(pendingDeleteToken)
     }
     console.error('Error saving thrift stock:', err)

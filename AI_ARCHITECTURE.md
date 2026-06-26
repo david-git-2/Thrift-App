@@ -67,7 +67,7 @@ flowchart LR
 | `thrift_types` | Type dropdown (`id`, `name`, `icon`) |
 | `thrift_shelves` | Shelf dropdown |
 | `thrift_currencies` | Currency symbols for pricing inputs |
-| `thrift_settings` | `default_purchase_price_gbp` tenant default |
+| `thrift_settings` | `default_origin_purchase_price` tenant default |
 
 ### RPCs
 
@@ -135,17 +135,21 @@ See [UI_CONSISTENCY_GUIDE.md](./UI_CONSISTENCY_GUIDE.md). App-specific classes: 
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key |
 | `VITE_CLOUDINARY_CLOUD_NAME` | Image upload |
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Unsigned upload preset |
+| `VITE_GOOGLE_DRIVE_UPLOAD_ENABLED` | Keep `false` on mobile; Drive sync is web-only |
 
-Supabase Edge Function `cloudinary-delete` (deployed on shared backend) deletes persisted thrift images. Set secrets in Supabase dashboard: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+Supabase Edge Function: `cloudinary-delete`. Drive backup is documented in [TRADEFLOWBD_DRIVE_UPLOADER.md](../brandwala-wholesale-quasar-v2/doc/TRADEFLOWBD_DRIVE_UPLOADER.md) (web admin Google login).
 
-### Cloudinary cleanup rules
+Cloudinary secrets: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
 
-- **Stock delete / image replace / image remove (save):** `deleteCloudinaryImage(url)` via edge function
-- **In-session orphan uploads (cancel, failed save):** `deleteCloudinaryByToken(token)` client-side
+### Image cleanup rules
+
+- **Replace / remove (save):** `cleanupStockImageAssets` — Cloudinary + Drive when `drive_file_id` exists
+- **Failed save orphan:** `cleanupStockImageAssets` or `deleteCloudinaryByToken`
 
 ## Feature changelog
 
 _Update this section when shipping features._
 
+- **2026-06-26** — Drive backup: web-only shipment sync via admin Google login (`shipmentDriveSyncClient.ts`, `ThriftShipmentPage`); mobile Cloudinary-only.
 - **2026-06-22** — Cloudinary lifecycle cleanup: `cloudinaryClient.ts`; delete persisted images on stock delete (Quasar), image replace/crop/remove; rollback in-session uploads via `delete_token`.
 - **2026-06-21** — Register Stock: required brand/condition/weight; section/condition DB enums; type/category dropdown icons; purchase vs cost currency groups; expense fields (`extra_origin_purchase_expense`, `extra_expense_cost`); `useThriftCurrency`, `thriftEnums.ts`, `typeIcon.ts`; shipment currency IDs on `SelectedShipment`.

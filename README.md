@@ -27,6 +27,20 @@ npm run build
 
 ---
 
+## Google Drive backup (web only)
+
+The mobile app saves images to **Cloudinary only**. Drive backup is done from the **web admin** UI.
+
+**Full guide:** [TRADEFLOWBD_DRIVE_UPLOADER.md](../brandwala-wholesale-quasar-v2/doc/TRADEFLOWBD_DRIVE_UPLOADER.md) in the main repo.
+
+1. Keep `VITE_GOOGLE_DRIVE_UPLOAD_ENABLED=false` in this app (default).
+2. On the web app, sign in with **Google** as the Drive admin email.
+3. Use **Thrift → Shipments** → cloud upload icon per shipment.
+
+No Supabase Drive secrets or OAuth Playground setup is required for thrift backup.
+
+---
+
 ## Google OAuth & Deep Linking in Native App
 
 Because Google OAuth authentication happens in the browser, deep links are used to return the user to the native mobile app after authentication.

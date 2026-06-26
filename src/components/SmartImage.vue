@@ -102,6 +102,12 @@ const toProxyImageUrl = (url: string | null | undefined) => {
     return trimmed
   }
 
+  const host = parsed.hostname.toLowerCase()
+  const isCloudinary = host === 'res.cloudinary.com' || host.endsWith('.cloudinary.com')
+  if (isCloudinary) {
+    return ''
+  }
+
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
   if (!supabaseUrl) return trimmed
 

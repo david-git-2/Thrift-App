@@ -23,16 +23,15 @@ export default defineRouter(({ store }) => {
   })
 
   // Global Auth Guard
-  Router.beforeEach((to, from, next) => {
+  Router.beforeEach((to) => {
     const authStore = useAuthStore(store)
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
     if (requiresAuth && !authStore.isAuthenticated) {
-      next('/login')
-    } else if ((to.path === '/login' || to.path === '/auth/callback') && authStore.isAuthenticated) {
-      next('/')
-    } else {
-      next()
+      return '/login'
+    }
+    if ((to.path === '/login' || to.path === '/auth/callback') && authStore.isAuthenticated) {
+      return '/'
     }
   })
 

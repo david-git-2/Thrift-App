@@ -49,15 +49,13 @@
 
       <div v-else-if="scannedItem" class="q-mt-sm">
         <q-card class="app-card overflow-hidden">
-          <div class="relative-position cursor-pointer" @click="openImagePreview">
-            <q-img
-              v-if="scannedItem.image_url"
-              :src="scannedItem.image_url"
-              ratio="4/3"
-              fit="cover"
-            />
-            <div v-else class="scan-hero-placeholder flex flex-center bg-grey-2">
-              <q-icon name="image" size="3rem" color="grey-4" />
+          <div class="relative-position">
+            <div class="scan-hero-image">
+              <SmartImage
+                :src="scannedItem.image_url"
+                :alt="scannedItem.name || scannedItem.brand_name || scannedItem.barcode || 'Product image'"
+                img-class="scan-hero-image__img"
+              />
             </div>
             <q-chip
               dense
@@ -209,20 +207,6 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
-
-      <q-dialog v-model="imagePreviewOpen" maximized>
-        <q-card class="bg-black flex flex-center">
-          <q-img v-if="scannedItem?.image_url" :src="scannedItem.image_url" fit="contain" />
-          <q-btn
-            flat
-            round
-            icon="close"
-            color="white"
-            class="absolute-top-right q-ma-md"
-            @click="imagePreviewOpen = false"
-          />
-        </q-card>
-      </q-dialog>
     </div>
   </q-page>
 </template>
@@ -240,9 +224,11 @@ import { normalizeScannedBarcode } from '../utils/normalizeScannedBarcode'
 import { buildBarcodeCandidates } from '../utils/barcodeCandidates'
 import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
 import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
+import { fetchThriftStockByBarcode } from '../composables/useThriftStockDetail'
 import { formatThriftAmount } from '../utils/formatThriftAmount'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 import AppPageHeader from '../components/AppPageHeader.vue'
+import SmartImage from '../components/SmartImage.vue'
 
 interface ScannedStockItem {
   id: number
@@ -282,7 +268,6 @@ const shipmentCostCurrencyId = ref<number | null>(null)
 
 const showSimDialog = ref(false)
 const simulatedBarcode = ref('')
-const imagePreviewOpen = ref(false)
 
 const costCurrency = computed(() =>
   currencyStore.currencyById(shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId),
@@ -369,85 +354,33 @@ const lookupBarcode = async (barcodeVal: string) => {
       }
     }
 
-    const { data, error } = await supabase
-      .from('thrift_stocks')
-      .select(`
-        id,
-        shipment_id,
-        name,
-        brand_name,
-        color,
-        size,
-        condition,
-        barcode,
-        status,
-        product_weight,
-        extra_weight,
-        note,
-        thrift_pricings (
-          cost_of_goods_sold,
-          target_price,
-          listed_price
-        ),
-        thrift_stock_images (
-          image_url,
-          is_primary
-        ),
-        thrift_shelves (
-          shelf_code,
-          name
-        ),
-        thrift_shipments (
-          name
-        ),
-        thrift_boxes (
-          name
-        )
-      `)
-      .eq('tenant_id', tenantId)
-      .eq('barcode', lookupBarcodeValue)
-      .maybeSingle()
+    const detail = await fetchThriftStockByBarcode(tenantId, lookupBarcodeValue)
 
-    if (error) throw error
-
-    if (data) {
-      const raw = data as Record<string, unknown>
-      const pricingArr = raw.thrift_pricings as Array<Record<string, unknown>> | undefined
-      const pricing = pricingArr?.[0] ?? {}
-      const imgs = (raw.thrift_stock_images as Array<Record<string, unknown>>) || []
-      const primaryImg = imgs.find((i) => i.is_primary) || imgs[0]
-      const shelfArr = raw.thrift_shelves as Array<Record<string, unknown>> | undefined
-      const shelf = shelfArr?.[0] ?? {}
-      const shipmentArr = raw.thrift_shipments as Array<Record<string, unknown>> | undefined
-      const shipment = shipmentArr?.[0] ?? {}
-      const boxArr = raw.thrift_boxes as Array<Record<string, unknown>> | undefined
-      const box = boxArr?.[0] ?? {}
-
-      const shipmentId = raw.shipment_id as number
-      const shipmentRow = await refreshShipmentCurrencyIds(shipmentId, tenantId)
+    if (detail) {
+      const shipmentRow = await refreshShipmentCurrencyIds(detail.shipment_id, tenantId)
       shipmentCostCurrencyId.value = shipmentRow?.cost_currency_id ?? null
 
       scannedItem.value = {
-        id: raw.id as number,
-        shipment_id: shipmentId,
-        name: (raw.name as string | null) ?? null,
-        brand_name: (raw.brand_name as string | null) ?? null,
-        color: (raw.color as string | null) ?? null,
-        size: (raw.size as string | null) ?? null,
-        condition: (raw.condition as string | null) ?? null,
-        barcode: (raw.barcode as string | null) ?? null,
-        status: (raw.status as string) || 'AVAILABLE',
-        product_weight: raw.product_weight != null ? Number(raw.product_weight) : null,
-        extra_weight: raw.extra_weight != null ? Number(raw.extra_weight) : null,
-        note: (raw.note as string | null) ?? null,
-        cost_of_goods_sold: Number(pricing.cost_of_goods_sold) || 0,
-        target_price: Number(pricing.target_price) || 0,
-        listed_price: Number(pricing.listed_price) || 0,
-        image_url: (primaryImg?.image_url as string) || '',
-        shelf_code: (shelf.shelf_code as string) || '',
-        shelf_name: (shelf.name as string) || '',
-        shipment_name: (shipment.name as string) || '',
-        box_name: (box.name as string) || '',
+        id: detail.id,
+        shipment_id: detail.shipment_id,
+        name: detail.name,
+        brand_name: detail.brand_name,
+        color: detail.color,
+        size: detail.size,
+        condition: detail.condition,
+        barcode: detail.barcode,
+        status: detail.status,
+        product_weight: detail.product_weight,
+        extra_weight: detail.extra_weight,
+        note: detail.note,
+        cost_of_goods_sold: detail.cost_of_goods_sold,
+        target_price: detail.target_price,
+        listed_price: detail.listed_price,
+        image_url: detail.image_url,
+        shelf_code: detail.shelf_code,
+        shelf_name: detail.shelf_name,
+        shipment_name: detail.shipment_name,
+        box_name: detail.box_name,
       }
     } else {
       scannedItem.value = null
@@ -481,12 +414,6 @@ const goToStockDetail = () => {
   }
 }
 
-const openImagePreview = () => {
-  if (scannedItem.value?.image_url) {
-    imagePreviewOpen.value = true
-  }
-}
-
 const copyBarcode = (barcode: string | null) => {
   if (!barcode) return
   navigator.clipboard.writeText(barcode)
@@ -512,8 +439,15 @@ const formatCondition = (cond: string | null) => cond?.replace(/_/g, ' ') || ''
 </script>
 
 <style scoped>
-.scan-hero-placeholder {
+.scan-hero-image {
   aspect-ratio: 4 / 3;
+  background: #f5f5f5;
+}
+
+.scan-hero-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .scan-price-tile {
