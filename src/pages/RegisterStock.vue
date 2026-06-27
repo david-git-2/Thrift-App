@@ -180,149 +180,36 @@
               Fields marked with <span class="app-field-label__mark">*</span> are required
             </div>
             <q-form ref="stockFormRef" class="q-gutter-y-md">
-              <div class="row q-col-gutter-sm">
-                <!-- Brand -->
-                <div class="col-12">
-                  <label class="app-field-label app-field-label--required block q-mb-xs">
-                    Brand Name <span class="app-field-label__mark">*</span>
-                  </label>
-                  <q-input
-                    v-model="form.brand_name"
-                    outlined
-                    dense
-                    placeholder="e.g. Nike"
-                    class="app-required-input"
-                    :class="{ 'app-required-input--pending': !form.brand_name?.trim() }"
-                    :rules="[val => !!val?.trim() || 'Required']"
-                  />
-                </div>
+              <div>
+                <label class="app-field-label app-field-label--required block q-mb-xs">
+                  Brand Name <span class="app-field-label__mark">*</span>
+                </label>
+                <q-input
+                  v-model="form.brand_name"
+                  outlined
+                  dense
+                  placeholder="e.g. Nike"
+                  class="app-required-input"
+                  :class="{ 'app-required-input--pending': !form.brand_name?.trim() }"
+                  :rules="[val => !!val?.trim() || 'Required']"
+                />
               </div>
 
-              <div class="row q-col-gutter-sm">
-                <!-- Category -->
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Category</label>
-                  <q-select
-                    v-model="form.category_id"
-                    :options="categoryOptions"
-                    option-label="name"
-                    option-value="id"
-                    emit-value
-                    map-options
-                    outlined
-                    dense
-                    clearable
-                    label="Select Category"
-                    :loading="loadingMeta"
-                  >
-                    <template #option="scope">
-                      <q-item v-bind="scope.itemProps">
-                        <q-item-section avatar>
-                          <q-icon name="category" />
-                        </q-item-section>
-                        <q-item-section>{{ scope.opt.name }}</q-item-section>
-                      </q-item>
-                    </template>
-                    <template #selected-item="scope">
-                      <span v-if="scope.opt" class="row items-center no-wrap">
-                        <q-icon name="category" class="q-mr-sm" />
-                        {{ scope.opt.name }}
-                      </span>
-                    </template>
-                  </q-select>
-                </div>
-
-                <!-- Type/Style -->
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Style / Type</label>
-                  <q-select
-                    v-model="form.type_id"
-                    :options="typeOptions"
-                    option-label="name"
-                    option-value="id"
-                    emit-value
-                    map-options
-                    outlined
-                    dense
-                    clearable
-                    label="Select Style"
-                    :loading="loadingMeta"
-                  >
-                    <template #option="scope">
-                      <q-item v-bind="scope.itemProps">
-                        <q-item-section avatar>
-                          <q-icon :name="resolveTypeIcon(scope.opt.icon)" />
-                        </q-item-section>
-                        <q-item-section>{{ scope.opt.name }}</q-item-section>
-                      </q-item>
-                    </template>
-                    <template #selected-item="scope">
-                      <span v-if="scope.opt" class="row items-center no-wrap">
-                        <q-icon :name="resolveTypeIcon(scope.opt.icon)" class="q-mr-sm" />
-                        {{ scope.opt.name }}
-                      </span>
-                    </template>
-                  </q-select>
-                </div>
+              <div>
+                <label class="app-field-label app-field-label--required block q-mb-xs">
+                  Size <span class="app-field-label__mark">*</span>
+                </label>
+                <q-input
+                  v-model="form.size"
+                  outlined
+                  dense
+                  placeholder="e.g. XL"
+                  class="app-required-input"
+                  :class="{ 'app-required-input--pending': !form.size?.trim() }"
+                  :rules="[val => !!val?.trim() || 'Required']"
+                />
               </div>
 
-              <div class="row q-col-gutter-sm">
-                <!-- Section -->
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Section</label>
-                  <q-select
-                    v-model="form.section"
-                    :options="THRIFT_SECTION_OPTIONS"
-                    outlined
-                    dense
-                    clearable
-                  />
-                </div>
-
-                <!-- Shelf -->
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Shelf / Location</label>
-                  <q-select
-                    v-model="form.shelf_id"
-                    :options="shelfOptions"
-                    option-label="shelf_code"
-                    option-value="id"
-                    emit-value
-                    map-options
-                    outlined
-                    dense
-                    clearable
-                    label="Select Shelf"
-                    :loading="loadingMeta"
-                  />
-                </div>
-              </div>
-
-              <div class="row q-col-gutter-sm">
-                <!-- Color -->
-                <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Color</label>
-                  <q-input
-                    v-model="form.color"
-                    outlined
-                    dense
-                    placeholder="e.g. Navy Blue"
-                  />
-                </div>
-
-                <!-- Size -->
-                <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Size</label>
-                  <q-input
-                    v-model="form.size"
-                    outlined
-                    dense
-                    placeholder="e.g. XL"
-                  />
-                </div>
-              </div>
-
-              <!-- Condition -->
               <div>
                 <label class="app-field-label app-field-label--required block q-mb-xs">
                   Condition <span class="app-field-label__mark">*</span>
@@ -338,133 +225,22 @@
                 />
               </div>
 
-              <!-- Weights -->
-              <div class="row q-col-gutter-sm">
-                <div class="col-6">
-                  <label class="app-field-label app-field-label--required block q-mb-xs">
-                    Product Weight (g) <span class="app-field-label__mark">*</span>
-                  </label>
-                  <q-input
-                    v-model.number="form.product_weight"
-                    type="number"
-                    step="1"
-                    min="1"
-                    outlined
-                    dense
-                    placeholder="e.g. 250"
-                    class="app-required-input"
-                    :class="{ 'app-required-input--pending': form.product_weight == null || form.product_weight <= 0 }"
-                    :rules="[val => val != null && val > 0 || 'Required']"
-                  />
-                </div>
-                <div class="col-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Weight (g)</label>
-                  <q-input
-                    v-model.number="form.extra_weight"
-                    type="number"
-                    step="1"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              <q-separator class="q-my-md" />
-
-              <!-- Purchase pricing -->
-              <div class="text-caption text-grey-8 q-mb-xs">
-                Purchase ({{ purchaseCurrency?.code ?? '—' }})
-              </div>
-              <div class="row q-col-gutter-sm">
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Origin Purchase Price</label>
-                  <q-input
-                    v-model.number="form.origin_purchase_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="purchaseCurrencySymbol"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Origin Purchase Expense</label>
-                  <q-input
-                    v-model.number="extraOriginPurchaseExpense"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="purchaseCurrencySymbol"
-                  />
-                </div>
-              </div>
-
-              <q-separator class="q-my-sm" />
-
-              <!-- Cost / pricing -->
-              <div class="text-caption text-grey-8 q-mb-xs">
-                Cost / pricing ({{ costCurrency?.code ?? '—' }})
-              </div>
-              <div class="row q-col-gutter-sm">
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">COGS Cost</label>
-                  <q-input
-                    v-model.number="pricing.cost_of_goods_sold"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="costCurrencySymbol"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Extra Expense Cost</label>
-                  <q-input
-                    v-model.number="pricing.extra_expense_cost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="costCurrencySymbol"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Target Price</label>
-                  <q-input
-                    v-model.number="pricing.target_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="costCurrencySymbol"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <label class="text-caption text-weight-bold text-grey-7 block q-mb-xs">Listed Price</label>
-                  <q-input
-                    v-model.number="pricing.listed_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    outlined
-                    dense
-                    placeholder="0.00"
-                    :prefix="costCurrencySymbol"
-                  />
-                </div>
+              <div>
+                <label class="app-field-label app-field-label--required block q-mb-xs">
+                  Product Weight (g) <span class="app-field-label__mark">*</span>
+                </label>
+                <q-input
+                  v-model.number="form.product_weight"
+                  type="number"
+                  step="1"
+                  min="1"
+                  outlined
+                  dense
+                  placeholder="e.g. 250"
+                  class="app-required-input"
+                  :class="{ 'app-required-input--pending': form.product_weight == null || form.product_weight <= 0 }"
+                  :rules="[val => val != null && val > 0 || 'Required']"
+                />
               </div>
 
               <q-separator class="q-my-md" />
@@ -540,38 +316,19 @@ import {
   validateBarcodeForRegistration,
   type BarcodeAvailability,
 } from '../composables/useThriftBarcode'
-import {
-  fetchThriftCategories,
-  fetchThriftDefaultOriginPurchasePrice,
-  fetchThriftShelves,
-  fetchThriftTypes,
-  type ThriftCatalogOption,
-} from '../composables/useThriftCatalog'
-import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
-import {
-  THRIFT_CONDITION_OPTIONS,
-  THRIFT_SECTION_OPTIONS,
-} from '../constants/thriftEnums'
-import { resolveTypeIcon } from '../utils/typeIcon'
-import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
+import { THRIFT_CONDITION_OPTIONS } from '../constants/thriftEnums'
 import PageInitialLoader from '../components/PageInitialLoader.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 const thriftStore = useThriftStore()
 const authStore = useAuthStore()
-const currencyStore = useThriftCurrencyStore()
 const { scanBarcode } = useBarcodeScan()
 const { capturePhoto, cropPhoto } = useProductPhoto()
 
 // State
 const stockFormRef = ref<QForm | null>(null)
-const categoryOptions = ref<ThriftCatalogOption[]>([])
-const typeOptions = ref<ThriftCatalogOption[]>([])
-const shelfOptions = ref<any[]>([])
-const loadingMeta = ref(false)
 const submitting = ref(false)
-const extraOriginPurchaseExpense = ref(0)
 
 // Web Capture variables
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -583,24 +340,10 @@ const barcodeAvailability = ref<BarcodeAvailability | null>(null)
 // Core Inputs Form
 const form = ref({
   brand_name: '',
-  category_id: null as number | null,
-  type_id: null as number | null,
-  section: null as string | null,
-  shelf_id: null as number | null,
-  color: '',
   size: '',
   condition: null as string | null,
   product_weight: null as number | null,
-  extra_weight: null as number | null,
-  origin_purchase_price: null as number | null,
-  note: ''
-})
-
-const pricing = ref({
-  cost_of_goods_sold: 0,
-  target_price: 0,
-  listed_price: 0,
-  extra_expense_cost: 0,
+  note: '',
 })
 
 // Get values from Store
@@ -610,15 +353,6 @@ const tempBarcode = computed(() => thriftStore.tempBarcode)
 const tempImage = computed(() => thriftStore.tempImage) // base64 or webPath
 const tenantId = computed(() => authStore.tenantId)
 const userEmail = computed(() => authStore.user?.email || 'app-user@brandwala.com')
-
-const purchaseCurrency = computed(() =>
-  currencyStore.currencyById(selectedShipment.value?.purchase_currency_id),
-)
-const costCurrency = computed(() =>
-  currencyStore.currencyById(selectedShipment.value?.cost_currency_id),
-)
-const purchaseCurrencySymbol = computed(() => purchaseCurrency.value?.symbol ?? '')
-const costCurrencySymbol = computed(() => costCurrency.value?.symbol ?? '')
 
 // Resolve preview image URL
 const previewImageUrl = computed(() => {
@@ -646,40 +380,12 @@ onMounted(async () => {
     return
   }
 
-  let shipment = selectedShipment.value
-  if (
-    shipment.purchase_currency_id == null ||
-    shipment.cost_currency_id == null
-  ) {
-    if (!tenantId.value) {
-      router.replace('/insert-stock')
-      return
-    }
-    try {
-      const refreshed = await refreshShipmentCurrencyIds(shipment.id, tenantId.value)
-      if (!refreshed) {
-        $q.notify({ type: 'warning', message: 'Shipment no longer exists. Please select again.' })
-        router.replace('/insert-stock')
-        return
-      }
-      thriftStore.setSelection(refreshed, selectedBox.value)
-      shipment = refreshed
-    } catch {
-      $q.notify({ type: 'negative', message: 'Could not load shipment currency settings.' })
-      router.replace('/insert-stock')
-      return
-    }
-  }
-
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
   if (sessionError || !sessionData.session) {
     $q.notify({ type: 'negative', message: 'Session expired. Please log in again.' })
     router.replace('/login')
     return
   }
-
-  await Promise.all([loadDropdowns(), currencyStore.loadCurrencies()])
-  await loadTenantSettings()
 
   if (tempBarcode.value) {
     await applyScannedBarcode(tempBarcode.value)
@@ -697,40 +403,6 @@ const submitManualBarcode = async () => {
   if (!value) return
   await applyScannedBarcode(value)
   manualBarcode.value = ''
-}
-
-const loadDropdowns = async () => {
-  if (!tenantId.value) return
-  loadingMeta.value = true
-  try {
-    const [categories, types, shelves] = await Promise.all([
-      fetchThriftCategories(tenantId.value),
-      fetchThriftTypes(tenantId.value),
-      fetchThriftShelves(tenantId.value),
-    ])
-
-    categoryOptions.value = categories
-    typeOptions.value = types
-    shelfOptions.value = shelves
-  } catch (err) {
-    console.error('Error fetching dropdown choices:', err)
-    const detail = err instanceof Error ? err.message : 'Unknown error'
-    $q.notify({ type: 'negative', message: `Failed to load options: ${detail}` })
-  } finally {
-    loadingMeta.value = false
-  }
-}
-
-const loadTenantSettings = async () => {
-  if (!tenantId.value) return
-  try {
-    const defaultPrice = await fetchThriftDefaultOriginPurchasePrice(tenantId.value)
-    if (defaultPrice !== null) {
-      form.value.origin_purchase_price = defaultPrice
-    }
-  } catch (err) {
-    console.warn('Could not load tenant default settings:', err)
-  }
 }
 
 // Scanning Features
@@ -871,42 +543,52 @@ const submitStock = async () => {
     return
   }
 
+  const barcode = tempBarcode.value
+  const imageBlob = webBlob.value
+  const shipmentId = selectedShipment.value.id
+  const workspaceTenantId = tenantId.value
+  const boxId = selectedBox.value?.id
+  const brandName = form.value.brand_name || null
+  const size = form.value.size || null
+  const condition = form.value.condition
+  const productWeight = form.value.product_weight
+  const note = form.value.note
+
+  thriftStore.clearTemp()
+  webBlob.value = null
+  barcodeAvailability.value = null
+  form.value.brand_name = ''
+  form.value.size = ''
+  form.value.condition = null
+  form.value.note = ''
+  form.value.product_weight = null
+
   submitting.value = true
 
   let pendingDeleteToken = ''
   let uploadResult: StockImageUploadResult | null = null
   try {
-    uploadResult = await uploadStockImage(webBlob.value, {
-      barcode: tempBarcode.value,
-      shipmentId: selectedShipment.value.id,
-      tenantId: tenantId.value,
+    uploadResult = await uploadStockImage(imageBlob, {
+      barcode,
+      shipmentId,
+      tenantId: workspaceTenantId,
     })
     pendingDeleteToken = uploadResult.deleteToken || ''
 
     await registerThriftStockFromApp({
-      tenantId: tenantId.value,
-      barcode: tempBarcode.value,
-      shipmentId: selectedShipment.value.id,
+      tenantId: workspaceTenantId,
+      barcode,
+      shipmentId,
       imageUrl: uploadResult.secureUrl,
-      driveFileId: null,
-      brandName: form.value.brand_name || null,
-      categoryId: form.value.category_id,
-      typeId: form.value.type_id,
-      section: form.value.section,
-      shelfId: form.value.shelf_id,
-      color: form.value.color || null,
-      size: form.value.size || null,
-      condition: form.value.condition,
-      ...(selectedBox.value ? { boxId: selectedBox.value.id } : {}),
-      productWeight: form.value.product_weight,
-      extraWeight: form.value.extra_weight,
-      note: form.value.note,
-      originPurchasePrice: form.value.origin_purchase_price,
-      extraOriginPurchaseExpense: extraOriginPurchaseExpense.value || null,
-      costOfGoodsSold: pricing.value.cost_of_goods_sold,
-      targetPrice: pricing.value.target_price,
-      listedPrice: pricing.value.listed_price,
-      extraExpenseCost: pricing.value.extra_expense_cost || null,
+      brandName,
+      size,
+      condition,
+      productWeight,
+      note,
+      costOfGoodsSold: 0,
+      targetPrice: 0,
+      listedPrice: 0,
+      ...(boxId ? { boxId } : {}),
       insertedBy: userEmail.value,
     })
 
@@ -914,22 +596,6 @@ const submitStock = async () => {
       type: 'positive',
       message: 'Product registered successfully!'
     })
-
-    // Reset scan capture
-    thriftStore.clearTemp()
-    webBlob.value = null
-    barcodeAvailability.value = null
-    
-    // Clear brand, notes, sizes, colors so they don't insert duplicate values
-    // but KEEP category, type, section, condition, shelf and pricing as defaults for faster sequential inputs!
-    form.value.brand_name = ''
-    form.value.color = ''
-    form.value.size = ''
-    form.value.note = ''
-    form.value.product_weight = null
-    form.value.extra_weight = null
-    form.value.origin_purchase_price = null
-    extraOriginPurchaseExpense.value = 0
 
   } catch (err: any) {
     if (uploadResult) {

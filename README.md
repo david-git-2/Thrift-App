@@ -62,17 +62,20 @@ This application is wrapped with Capacitor to run natively on mobile devices.
 
 ### 1. How to Open the Project in Android Studio
 
-You can open the native Android workspace in Android Studio in two ways:
+**Quick open (recommended):**
 
-*   **Via CLI Command:**
-    Run this command from the root directory to build the app and trigger Android Studio automatically:
+```bash
+cd src-capacitor
+npx cap open android
+```
+
+Run from the project root. This opens `src-capacitor/android` in Android Studio.
+
+Other options:
+
+*   **Dev mode (build + run on device/emulator):**
     ```bash
     npx quasar dev -m capacitor -T android
-    ```
-    Alternatively, navigate to the `src-capacitor` directory and open the project:
-    ```bash
-    cd src-capacitor
-    npx cap open android
     ```
 
 *   **Manually via Android Studio UI:**
