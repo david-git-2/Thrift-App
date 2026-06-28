@@ -33,7 +33,7 @@ export default defineConfig((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
       env: {
-        clientPrefix: ['VITE_', 'QCLI_']
+        clientPrefix: ["VITE_", "QCLI_"]
       },
       target: {
         // browser: 'baseline-widely-available',
@@ -41,8 +41,8 @@ export default defineConfig((/* ctx */) => {
       },
 
       extendViteConf(viteConf) {
-        viteConf.build = viteConf.build ?? {}
-        viteConf.build.emptyOutDir = true
+        viteConf.build = viteConf.build ?? {};
+        viteConf.build.emptyOutDir = true;
       },
 
       typescript: {
@@ -95,7 +95,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Notify', 'Loading']
+      plugins: ["Notify", "Loading"]
     },
 
     // animations: 'all', // --- includes all animations

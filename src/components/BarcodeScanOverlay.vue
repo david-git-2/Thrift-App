@@ -4,7 +4,9 @@
     class="barcode-scan-overlay fixed-full flex flex-center"
   >
     <div class="barcode-scan-overlay__panel q-pa-md">
-      <div class="text-white text-subtitle1 text-weight-bold q-mb-md text-center">
+      <div
+        class="text-white text-subtitle1 text-weight-bold q-mb-md text-center"
+      >
         Point camera at barcode
       </div>
       <q-btn
@@ -12,7 +14,7 @@
         text-color="primary"
         label="Cancel"
         class="full-width text-weight-bold app-cta-btn"
-        style="min-height: 48px !important; box-shadow: none;"
+        style="min-height: 48px !important; box-shadow: none"
         no-caps
         @click="onCancel"
       />
@@ -23,11 +25,11 @@
 <script setup lang="ts">
 import {
   barcodeScanOverlayActive,
-  cancelBarcodeOverlayScan,
-} from '../composables/useBarcodeScan'
+  cancelBarcodeOverlayScan
+} from "../composables/useBarcodeScan";
 
 function onCancel() {
-  cancelBarcodeOverlayScan()
+  cancelBarcodeOverlayScan();
 }
 </script>
 

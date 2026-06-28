@@ -1,43 +1,45 @@
-import { supabase } from '../boot/supabase'
+import { supabase } from "../boot/supabase";
 import {
   buildThriftShipmentCloudinaryUploadTarget,
   buildThriftStockImageFileName,
   deleteCloudinaryImage,
-  uploadToCloudinary,
-} from './cloudinaryClient'
+  uploadToCloudinary
+} from "./cloudinaryClient";
 
 export type StockImageUploadResult = {
-  secureUrl: string
-  deleteToken?: string | undefined
-}
+  secureUrl: string;
+  deleteToken?: string | undefined;
+};
 
 export class StockImageDuplicateError extends Error {
   constructor(barcode: string) {
-    super(`An image already exists for barcode ${barcode}. Replace the existing image instead.`)
-    this.name = 'StockImageDuplicateError'
+    super(
+      `An image already exists for barcode ${barcode}. Replace the existing image instead.`
+    );
+    this.name = "StockImageDuplicateError";
   }
 }
 
 export type StockImageUploadOptions = {
-  barcode: string
-  tenantId?: number
-  stockId?: number
-  shipmentId?: number | null
-  replaceImageUrl?: string | null
-  cloudinaryFolder?: string
-}
+  barcode: string;
+  tenantId?: number;
+  stockId?: number;
+  shipmentId?: number | null;
+  replaceImageUrl?: string | null;
+  cloudinaryFolder?: string;
+};
 
 async function assertNoDuplicateStockImage(params: {
-  tenantId: number
-  shipmentId: number
-  barcode: string
-  excludeStockId?: number
+  tenantId: number;
+  shipmentId: number;
+  barcode: string;
+  excludeStockId?: number;
 }): Promise<void> {
-  const normalizedBarcode = params.barcode.trim()
-  if (!normalizedBarcode) return
+  const normalizedBarcode = params.barcode.trim();
+  if (!normalizedBarcode) return;
 
   let query = supabase
-    .from('thrift_stocks')
+    .from("thrift_stocks")
     .select(`
       id,
       thrift_stock_images!inner (
@@ -45,76 +47,83 @@ async function assertNoDuplicateStockImage(params: {
         image_url
       )
     `)
-    .eq('tenant_id', params.tenantId)
-    .eq('shipment_id', params.shipmentId)
-    .eq('barcode', normalizedBarcode)
-    .not('thrift_stock_images.image_url', 'is', null)
+    .eq("tenant_id", params.tenantId)
+    .eq("shipment_id", params.shipmentId)
+    .eq("barcode", normalizedBarcode)
+    .not("thrift_stock_images.image_url", "is", null);
 
   if (params.excludeStockId) {
-    query = query.neq('id', params.excludeStockId)
+    query = query.neq("id", params.excludeStockId);
   }
 
-  const { data, error } = await query.limit(1)
-  if (error) throw error
+  const { data, error } = await query.limit(1);
+  if (error) throw error;
 
   if ((data || []).length > 0) {
-    throw new StockImageDuplicateError(normalizedBarcode)
+    throw new StockImageDuplicateError(normalizedBarcode);
   }
 }
 
 export async function uploadStockImage(
   blob: Blob,
-  options: StockImageUploadOptions,
+  options: StockImageUploadOptions
 ): Promise<StockImageUploadResult> {
-  const barcode = options.barcode?.trim()
+  const barcode = options.barcode?.trim();
   if (!barcode) {
-    throw new Error('Barcode is required for stock image upload.')
+    throw new Error("Barcode is required for stock image upload.");
   }
 
-  const replaceImageUrl = options.replaceImageUrl?.trim() || ''
-  const isReplace = Boolean(replaceImageUrl)
+  const replaceImageUrl = options.replaceImageUrl?.trim() || "";
+  const isReplace = Boolean(replaceImageUrl);
 
   if (!isReplace && options.tenantId && options.shipmentId) {
     await assertNoDuplicateStockImage({
       tenantId: options.tenantId,
       shipmentId: options.shipmentId,
       barcode,
-      ...(options.stockId ? { excludeStockId: options.stockId } : {}),
-    })
+      ...(options.stockId ? { excludeStockId: options.stockId } : {})
+    });
   }
 
-  const fileName = buildThriftStockImageFileName(barcode)
+  const fileName = buildThriftStockImageFileName(barcode);
 
   if (!options.shipmentId || options.shipmentId <= 0) {
-    throw new Error('Shipment is required to upload a stock image.')
+    throw new Error("Shipment is required to upload a stock image.");
   }
 
   const uploadTarget = buildThriftShipmentCloudinaryUploadTarget(
     options.shipmentId,
     barcode,
-    ...(options.cloudinaryFolder ? [options.cloudinaryFolder] : []),
-  )
+    ...(options.cloudinaryFolder ? [options.cloudinaryFolder] : [])
+  );
 
   if (isReplace) {
-    await deleteCloudinaryImage(replaceImageUrl)
+    await deleteCloudinaryImage(replaceImageUrl);
   }
 
-  const cloudinaryResult = await uploadToCloudinary(blob, fileName, uploadTarget.shipmentFolder, {
-    publicId: uploadTarget.publicId,
-    shipmentFolder: uploadTarget.shipmentFolder,
-    assetFolder: uploadTarget.shipmentFolder,
-  })
+  const cloudinaryResult = await uploadToCloudinary(
+    blob,
+    fileName,
+    uploadTarget.shipmentFolder,
+    {
+      publicId: uploadTarget.publicId,
+      shipmentFolder: uploadTarget.shipmentFolder,
+      assetFolder: uploadTarget.shipmentFolder
+    }
+  );
 
   return {
     secureUrl: cloudinaryResult.secureUrl,
-    ...(cloudinaryResult.deleteToken ? { deleteToken: cloudinaryResult.deleteToken } : {}),
-  }
+    ...(cloudinaryResult.deleteToken
+      ? { deleteToken: cloudinaryResult.deleteToken }
+      : {})
+  };
 }
 
 export async function cleanupStockImageAssets(payload: {
-  imageUrl?: string | undefined
+  imageUrl?: string | undefined;
 }): Promise<void> {
   if (payload.imageUrl) {
-    await deleteCloudinaryImage(payload.imageUrl)
+    await deleteCloudinaryImage(payload.imageUrl);
   }
 }

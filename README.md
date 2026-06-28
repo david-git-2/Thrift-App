@@ -46,7 +46,9 @@ No Supabase Drive secrets or OAuth Playground setup is required for thrift backu
 Because Google OAuth authentication happens in the browser, deep links are used to return the user to the native mobile app after authentication.
 
 ### Supabase Configuration
+
 To enable authentication redirects to the app, you **MUST** whitelist the custom deep link redirect URL in the Supabase Dashboard:
+
 1. Go to your **Supabase Dashboard** > **Authentication** > **URL Configuration**.
 2. Add the following URL to your **Redirect URLs**:
    ```
@@ -73,15 +75,16 @@ Run from the project root. This opens `src-capacitor/android` in Android Studio.
 
 Other options:
 
-*   **Dev mode (build + run on device/emulator):**
-    ```bash
-    npx quasar dev -m capacitor -T android
-    ```
+- **Dev mode (build + run on device/emulator):**
 
-*   **Manually via Android Studio UI:**
-    1. Launch **Android Studio**.
-    2. Click **Open** (or **Open an Existing Project**).
-    3. Select the `src-capacitor/android` folder in this project.
+  ```bash
+  npx quasar dev -m capacitor -T android
+  ```
+
+- **Manually via Android Studio UI:**
+  1. Launch **Android Studio**.
+  2. Click **Open** (or **Open an Existing Project**).
+  3. Select the `src-capacitor/android` folder in this project.
 
 ---
 
@@ -89,17 +92,19 @@ Other options:
 
 Whenever you make frontend changes in the `src/` directory or install new Capacitor plugins, you need to sync them with the native Android project:
 
-*   **Via Quasar (Build + Sync):**
-    ```bash
-    npx quasar build -m capacitor -T android
-    ```
-    This compiles the web app assets and automatically executes `cap sync` under the hood.
+- **Via Quasar (Build + Sync):**
 
-*   **Manual Capacitor Sync:**
-    If you only installed a new plugin or changed configuration files without needing a full rebuild, run:
-    ```bash
-    npm run sync
-    ```
+  ```bash
+  npx quasar build -m capacitor -T android
+  ```
+
+  This compiles the web app assets and automatically executes `cap sync` under the hood.
+
+- **Manual Capacitor Sync:**
+  If you only installed a new plugin or changed configuration files without needing a full rebuild, run:
+  ```bash
+  npm run sync
+  ```
 
 ---
 
@@ -124,17 +129,20 @@ npm run build:android:debug
 Legacy step-by-step:
 
 1.  **Compile the Web Assets:**
+
     ```bash
     npx quasar build -m capacitor -T android
     ```
 
 2.  **Build the Native Binary:**
     You can trigger the native compiler from the command line:
+
     ```bash
     cd src-capacitor
     npx cap build android
     ```
-    *This command will ask whether to build a Debug APK or a Release AAB/APK.*
+
+    _This command will ask whether to build a Debug APK or a Release AAB/APK._
 
 3.  **Alternative Build via Android Studio:**
     1. Open the project in Android Studio (`cd src-capacitor && npx cap open android`).

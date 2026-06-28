@@ -11,7 +11,7 @@
             no-caps
             to="/insert-stock"
             class="app-cta-btn"
-            style="min-height: 40px !important; font-size: 0.9rem !important;"
+            style="min-height: 40px !important; font-size: 0.9rem !important"
           />
         </template>
       </AppPageHeader>
@@ -33,7 +33,6 @@
 
           <div class="row q-col-gutter-sm">
             <div class="col-6">
-
               <q-select
                 v-model="selectedStatus"
                 outlined
@@ -46,7 +45,7 @@
               />
             </div>
             <div class="col-6">
-             <q-select
+              <q-select
                 v-model="selectedCondition"
                 outlined
                 dense
@@ -64,11 +63,16 @@
       <q-pull-to-refresh @refresh="onRefresh" color="primary">
         <PageInitialLoader v-if="loading && stocks.length === 0" />
 
-        <div v-else-if="!loading && hasLoadedOnce && stocks.length === 0" class="app-empty-state">
+        <div
+          v-else-if="!loading && hasLoadedOnce && stocks.length === 0"
+          class="app-empty-state"
+        >
           <div class="app-empty-state__icon">
             <q-icon name="inventory_2" size="2rem" />
           </div>
-          <div class="text-subtitle1 text-weight-bold text-grey-8">No items found</div>
+          <div class="text-subtitle1 text-weight-bold text-grey-8"
+            >No items found</div
+          >
           <q-btn
             color="primary"
             flat
@@ -112,21 +116,29 @@
                 <div class="col-8 q-pa-sm flex flex-col justify-between">
                   <div>
                     <div class="row items-center justify-between no-wrap">
-                      <span class="text-caption text-weight-bold text-primary text-uppercase">
-                        {{ item.brand_name || 'Generic' }}
+                      <span
+                        class="text-caption text-weight-bold text-primary text-uppercase"
+                      >
+                        {{ item.brand_name || "Generic" }}
                       </span>
                       <q-icon name="chevron_right" size="18px" color="grey-5" />
                     </div>
 
-                    <div class="text-subtitle2 text-weight-bold text-grey-9 ellipsis-2-lines">
+                    <div
+                      class="text-subtitle2 text-weight-bold text-grey-9 ellipsis-2-lines"
+                    >
                       {{ item.name || item.brand_name || item.barcode }}
                     </div>
 
-                    <div class="row items-center q-gutter-x-xs text-caption text-grey-6 q-mt-xs">
+                    <div
+                      class="row items-center q-gutter-x-xs text-caption text-grey-6 q-mt-xs"
+                    >
                       <span v-if="item.color" class="row items-center">
                         <q-badge
                           rounded
-                          :style="{ backgroundColor: getBadgeColor(item.color) }"
+                          :style="{
+                            backgroundColor: getBadgeColor(item.color)
+                          }"
                           class="q-mr-xs border-light"
                         />
                         {{ item.color }}
@@ -139,7 +151,9 @@
                       class="row items-center bg-grey-1 rounded-borders q-px-sm q-py-xs q-mt-xs"
                       @click.stop="copyBarcode(item.barcode)"
                     >
-                      <span class="text-caption text-mono text-grey-8 text-xs truncate col">
+                      <span
+                        class="text-caption text-mono text-grey-8 text-xs truncate col"
+                      >
                         {{ item.barcode }}
                       </span>
                       <q-icon name="content_copy" size="12px" color="grey-6" />
@@ -149,11 +163,6 @@
                   <div class="row items-end justify-between q-mt-xs">
                     <div class="text-subtitle1 text-weight-bold text-grey-9">
                       {{ formatPrice(item.listed_price, item) }}
-                    </div>
-                    <div class="text-caption text-grey-6 text-right">
-                      {{ formatPrice(item.cost_of_goods_sold, item) }}
-                      ·
-                      {{ formatPrice(item.target_price, item) }}
                     </div>
                   </div>
                 </div>
@@ -178,170 +187,170 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { useAuthStore } from '../stores/authStore'
-import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
+import { ref, onMounted, nextTick, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import { useAuthStore } from "../stores/authStore";
+import { useThriftCurrencyStore } from "../stores/thriftCurrencyStore";
 import {
   fetchThriftStocksPaginated,
   type ThriftStockListItem,
-  type ThriftStockListMeta,
-} from '../composables/useThriftStockList'
-import { fetchShipmentCostCurrencyMapForIds } from '../composables/useThriftShipment'
-import { formatThriftAmount } from '../utils/formatThriftAmount'
-import { THRIFT_CONDITION_FILTER_OPTIONS } from '../constants/thriftEnums'
-import PageInitialLoader from '../components/PageInitialLoader.vue'
-import AppPageHeader from '../components/AppPageHeader.vue'
+  type ThriftStockListMeta
+} from "../composables/useThriftStockList";
+import { fetchShipmentCostCurrencyMapForIds } from "../composables/useThriftShipment";
+import { formatThriftAmount } from "../utils/formatThriftAmount";
+import { THRIFT_CONDITION_FILTER_OPTIONS } from "../constants/thriftEnums";
+import PageInitialLoader from "../components/PageInitialLoader.vue";
+import AppPageHeader from "../components/AppPageHeader.vue";
 
-const router = useRouter()
-const $q = useQuasar()
-const authStore = useAuthStore()
-const currencyStore = useThriftCurrencyStore()
+const router = useRouter();
+const $q = useQuasar();
+const authStore = useAuthStore();
+const currencyStore = useThriftCurrencyStore();
 
-const stocks = ref<ThriftStockListItem[]>([])
-const loading = ref(true)
-const hasLoadedOnce = ref(false)
-const searchQuery = ref('')
-const selectedStatus = ref<string | null>('AVAILABLE')
-const selectedCondition = ref<string | null>(null)
-const shipmentCurrencyMap = ref<Map<number, number>>(new Map())
+const stocks = ref<ThriftStockListItem[]>([]);
+const loading = ref(true);
+const hasLoadedOnce = ref(false);
+const searchQuery = ref("");
+const selectedStatus = ref<string | null>("AVAILABLE");
+const selectedCondition = ref<string | null>(null);
+const shipmentCurrencyMap = ref<Map<number, number>>(new Map());
 
-const page = ref(1)
-const pageSize = 20
-const filtersReady = ref(false)
-let fetchInFlight = false
-let pendingRefetch = false
-let pendingRefetchReset = true
+const page = ref(1);
+const pageSize = 20;
+const filtersReady = ref(false);
+let fetchInFlight = false;
+let pendingRefetch = false;
+let pendingRefetchReset = true;
 const meta = ref<ThriftStockListMeta>({
   total: 0,
   page: 1,
   page_size: pageSize,
-  total_pages: 0,
-})
+  total_pages: 0
+});
 
 const statusOptions = [
-  { label: 'All statuses', value: null },
-  { label: 'Available', value: 'AVAILABLE' },
-  { label: 'Out of stock', value: 'OUT_OF_STOCK' },
-  { label: 'Damaged', value: 'DAMAGED' },
-  { label: 'Stolen', value: 'STOLEN' },
-]
+  { label: "All statuses", value: null },
+  { label: "Available", value: "AVAILABLE" },
+  { label: "Out of stock", value: "OUT_OF_STOCK" },
+  { label: "Damaged", value: "DAMAGED" },
+  { label: "Stolen", value: "STOLEN" }
+];
 
 const conditionOptions = [
-  { label: 'All conditions', value: null },
-  ...THRIFT_CONDITION_FILTER_OPTIONS,
-]
+  { label: "All conditions", value: null },
+  ...THRIFT_CONDITION_FILTER_OPTIONS
+];
 
 const currencyForStock = (item: ThriftStockListItem) => {
   const currencyId =
     shipmentCurrencyMap.value.get(item.shipment_id) ??
-    authStore.thriftDefaultCostCurrencyId
-  return currencyStore.currencyById(currencyId)
-}
+    authStore.thriftDefaultCostCurrencyId;
+  return currencyStore.currencyById(currencyId);
+};
 
 const formatPrice = (amount: number, item: ThriftStockListItem) =>
-  formatThriftAmount(amount, currencyForStock(item))
+  formatThriftAmount(amount, currencyForStock(item));
 
 const openStock = (id: number) => {
-  router.push({ name: 'stock-detail', params: { id } })
-}
+  router.push({ name: "stock-detail", params: { id } });
+};
 
 const loadAuxData = async () => {
-  const tenantId = authStore.tenantId
-  if (!tenantId) return
+  const tenantId = authStore.tenantId;
+  if (!tenantId) return;
 
-  void currencyStore.loadCurrencies()
+  void currencyStore.loadCurrencies();
 
-  const shipmentIds = stocks.value.map((item) => item.shipment_id)
-  if (shipmentIds.length === 0) return
+  const shipmentIds = stocks.value.map(item => item.shipment_id);
+  if (shipmentIds.length === 0) return;
 
   try {
-    const map = await fetchShipmentCostCurrencyMapForIds(tenantId, shipmentIds)
-    shipmentCurrencyMap.value = new Map([...shipmentCurrencyMap.value, ...map])
+    const map = await fetchShipmentCostCurrencyMapForIds(tenantId, shipmentIds);
+    shipmentCurrencyMap.value = new Map([...shipmentCurrencyMap.value, ...map]);
   } catch (err) {
-    console.warn('Failed to load shipment currencies:', err)
+    console.warn("Failed to load shipment currencies:", err);
   }
-}
+};
 
 const loadPage = async () => {
-  const tenantId = authStore.tenantId
+  const tenantId = authStore.tenantId;
   if (!tenantId) {
-    loading.value = false
-    return
+    loading.value = false;
+    return;
   }
-  await fetchStocks()
-}
+  await fetchStocks();
+};
 
 const onStatusFilterChange = () => {
-  if (!filtersReady.value) return
-  void fetchStocks(true)
-}
+  if (!filtersReady.value) return;
+  void fetchStocks(true);
+};
 
 const onConditionFilterChange = () => {
-  if (!filtersReady.value) return
-  void fetchStocks(true)
-}
+  if (!filtersReady.value) return;
+  void fetchStocks(true);
+};
 
 onMounted(async () => {
-  await loadPage()
-  await nextTick()
-  filtersReady.value = true
-})
+  await loadPage();
+  await nextTick();
+  filtersReady.value = true;
+});
 
 watch(
   () => authStore.tenantId,
-  (tenantId) => {
-    if (tenantId && !hasLoadedOnce.value) void loadPage()
-  },
-)
+  tenantId => {
+    if (tenantId && !hasLoadedOnce.value) void loadPage();
+  }
+);
 
 const onRefresh = async (done: () => void) => {
-  await fetchStocks(true)
-  done()
-}
+  await fetchStocks(true);
+  done();
+};
 
 const onSearch = () => {
-  fetchStocks(true)
-}
+  fetchStocks(true);
+};
 
 const onPageChange = () => {
-  fetchStocks(false)
-}
+  fetchStocks(false);
+};
 
 const clearFilters = () => {
-  searchQuery.value = ''
-  selectedStatus.value = 'AVAILABLE'
-  selectedCondition.value = null
-  fetchStocks(true)
-}
+  searchQuery.value = "";
+  selectedStatus.value = "AVAILABLE";
+  selectedCondition.value = null;
+  fetchStocks(true);
+};
 
 const fetchStocks = async (reset = true) => {
-  const tenantId = authStore.tenantId
+  const tenantId = authStore.tenantId;
   if (!tenantId) {
-    loading.value = false
-    return
+    loading.value = false;
+    return;
   }
 
   if (fetchInFlight) {
-    pendingRefetch = true
-    pendingRefetchReset = pendingRefetchReset || reset
-    return
+    pendingRefetch = true;
+    pendingRefetchReset = pendingRefetchReset || reset;
+    return;
   }
 
-  fetchInFlight = true
-  let currentReset = reset
+  fetchInFlight = true;
+  let currentReset = reset;
 
   try {
     do {
-      pendingRefetch = false
-      const tenantIdForFetch = authStore.tenantId
-      if (!tenantIdForFetch) break
+      pendingRefetch = false;
+      const tenantIdForFetch = authStore.tenantId;
+      if (!tenantIdForFetch) break;
 
-      loading.value = true
+      loading.value = true;
       if (currentReset) {
-        page.value = 1
-        stocks.value = []
+        page.value = 1;
+        stocks.value = [];
       }
 
       try {
@@ -351,78 +360,79 @@ const fetchStocks = async (reset = true) => {
           pageSize,
           search: searchQuery.value,
           status: selectedStatus.value,
-          condition: selectedCondition.value,
-        })
+          condition: selectedCondition.value
+        });
 
-        stocks.value = result.data
-        meta.value = result.meta
-        void loadAuxData()
+        stocks.value = result.data;
+        meta.value = result.meta;
+        void loadAuxData();
       } catch (err: unknown) {
-        console.error('Error loading stocks:', err)
+        console.error("Error loading stocks:", err);
         $q.notify({
-          type: 'negative',
-          message: err instanceof Error ? err.message : 'Failed to retrieve stock list',
-        })
+          type: "negative",
+          message:
+            err instanceof Error ? err.message : "Failed to retrieve stock list"
+        });
       } finally {
-        loading.value = false
-        hasLoadedOnce.value = true
+        loading.value = false;
+        hasLoadedOnce.value = true;
       }
 
-      currentReset = pendingRefetchReset
-      pendingRefetchReset = true
-    } while (pendingRefetch)
+      currentReset = pendingRefetchReset;
+      pendingRefetchReset = true;
+    } while (pendingRefetch);
   } finally {
-    fetchInFlight = false
+    fetchInFlight = false;
   }
-}
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'AVAILABLE':
-      return 'positive'
-    case 'OUT_OF_STOCK':
-      return 'grey-6'
-    case 'DAMAGED':
-      return 'warning'
-    case 'STOLEN':
-      return 'negative'
+    case "AVAILABLE":
+      return "positive";
+    case "OUT_OF_STOCK":
+      return "grey-6";
+    case "DAMAGED":
+      return "warning";
+    case "STOLEN":
+      return "negative";
     default:
-      return 'primary'
+      return "primary";
   }
-}
+};
 
 const copyBarcode = (barcode: string | null) => {
-  if (!barcode) return
-  navigator.clipboard.writeText(barcode)
+  if (!barcode) return;
+  navigator.clipboard.writeText(barcode);
   $q.notify({
-    type: 'positive',
-    message: 'Barcode copied',
-    timeout: 1000,
-  })
-}
+    type: "positive",
+    message: "Barcode copied",
+    timeout: 1000
+  });
+};
 
 const getBadgeColor = (colorName: string) => {
-  const name = colorName?.toLowerCase().trim()
-  if (!name) return 'transparent'
+  const name = colorName?.toLowerCase().trim();
+  if (!name) return "transparent";
 
   const map: Record<string, string> = {
-    black: '#000000',
-    white: '#ffffff',
-    red: '#ef4444',
-    blue: '#3b82f6',
-    green: '#10b981',
-    yellow: '#f59e0b',
-    orange: '#f97316',
-    purple: '#8b5cf6',
-    pink: '#ec4899',
-    grey: '#6b7280',
-    gray: '#6b7280',
-    brown: '#78350f',
-    navy: '#1e3a8a',
-  }
+    black: "#000000",
+    white: "#ffffff",
+    red: "#ef4444",
+    blue: "#3b82f6",
+    green: "#10b981",
+    yellow: "#f59e0b",
+    orange: "#f97316",
+    purple: "#8b5cf6",
+    pink: "#ec4899",
+    grey: "#6b7280",
+    gray: "#6b7280",
+    brown: "#78350f",
+    navy: "#1e3a8a"
+  };
 
-  return map[name] || '#9ca3af'
-}
+  return map[name] || "#9ca3af";
+};
 </script>
 
 <style scoped>

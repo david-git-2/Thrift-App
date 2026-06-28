@@ -2,7 +2,6 @@
   <q-layout view="hHh lpR fFf" class="auth-layout auth-scope--app">
     <q-page-container>
       <q-page class="auth-page">
-
         <!-- Animated background blobs (left canvas only) -->
         <div class="auth-bg" aria-hidden="true">
           <div class="auth-bg__blob auth-bg__blob--1" />
@@ -11,7 +10,6 @@
         </div>
 
         <div class="auth-layout__inner">
-
           <!-- Left: full-bleed dark canvas -->
           <div class="auth-canvas">
             <!-- Brand wordmark — top left -->
@@ -48,7 +46,11 @@
 
               <!-- Error banner -->
               <div v-if="errorMessage" class="auth-card__error" role="alert">
-                <q-icon name="error_outline" size="1.1rem" class="auth-card__error-icon" />
+                <q-icon
+                  name="error_outline"
+                  size="1.1rem"
+                  class="auth-card__error-icon"
+                />
                 <span>{{ errorMessage }}</span>
               </div>
 
@@ -119,72 +121,74 @@
                   </svg>
 
                   <span class="auth-card__cta-label">
-                    {{ isLoading ? 'Connecting…' : 'Continue with Google' }}
+                    {{ isLoading ? "Connecting…" : "Continue with Google" }}
                   </span>
                 </span>
               </button>
 
               <p class="auth-card__secure-note">
-                <q-icon name="lock" size="0.85rem" style="vertical-align: -2px;" />
+                <q-icon
+                  name="lock"
+                  size="0.85rem"
+                  style="vertical-align: -2px"
+                />
                 Secured with Google sign-in
               </p>
             </section>
           </div>
-
         </div>
-
       </q-page>
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useOAuthLogin } from '../composables/useOAuthLogin'
-import BrandMark from '../components/BrandMark.vue'
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import { useOAuthLogin } from "../composables/useOAuthLogin";
+import BrandMark from "../components/BrandMark.vue";
 
-const route = useRoute()
-const { handleGoogleLogin, isLoading } = useOAuthLogin()
+const route = useRoute();
+const { handleGoogleLogin, isLoading } = useOAuthLogin();
 
 const errorMessage = computed(() => {
-  const err = route.query.error
-  if (err === 'no_membership') {
-    return 'This account does not have permission for the Thrift workspace.'
+  const err = route.query.error;
+  if (err === "no_membership") {
+    return "This account does not have permission for the Thrift workspace.";
   }
-  if (err === 'invalid_tenant' || err === 'no_tenant') {
-    return 'This account is not allowed for the Thrift tenant workspace.'
+  if (err === "invalid_tenant" || err === "no_tenant") {
+    return "This account is not allowed for the Thrift tenant workspace.";
   }
-  if (err === 'membership_failed') {
-    return 'Failed to verify membership details. Please try again.'
+  if (err === "membership_failed") {
+    return "Failed to verify membership details. Please try again.";
   }
   if (err) {
-    return 'Authentication error occurred. Please try again.'
+    return "Authentication error occurred. Please try again.";
   }
-  return ''
-})
+  return "";
+});
 
 const onGoogleLogin = () => {
-  handleGoogleLogin()
-}
+  handleGoogleLogin();
+};
 </script>
 
 <style scoped>
 /* ── Color palette ────────────────────────── */
 .auth-scope--app {
-  --auth-bg:       #030f08;
-  --auth-mid:      #052e1a;
-  --auth-accent:   #10b981;
+  --auth-bg: #030f08;
+  --auth-mid: #052e1a;
+  --auth-accent: #10b981;
   --auth-accent-rgb: 16 185 129;
-  --auth-glow:     rgb(16 185 129 / 0.38);
-  --auth-ghost:    rgb(16 185 129 / 0.04);
+  --auth-glow: rgb(16 185 129 / 0.38);
+  --auth-ghost: rgb(16 185 129 / 0.04);
   --auth-card-bar: #059669;
 }
 
 .auth-card--app {
-  --card-accent:     #059669;
+  --card-accent: #059669;
   --card-accent-rgb: 5 150 105;
-  --card-soft:       rgb(5 150 105 / 0.08);
+  --card-soft: rgb(5 150 105 / 0.08);
 }
 
 /* ── Root layout ─────────────────────────────────────── */
@@ -248,10 +252,18 @@ const onGoogleLogin = () => {
 }
 
 @keyframes blobFloat {
-  0%   { transform: translate(0,     0)    scale(1); }
-  40%  { transform: translate(40px, -50px) scale(1.06); }
-  70%  { transform: translate(-25px, 30px) scale(0.96); }
-  100% { transform: translate(15px,  -15px) scale(1.03); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(40px, -50px) scale(1.06);
+  }
+  70% {
+    transform: translate(-25px, 30px) scale(0.96);
+  }
+  100% {
+    transform: translate(15px, -15px) scale(1.03);
+  }
 }
 
 /* ── Two-column inner ────────────────────────────────── */
@@ -278,7 +290,7 @@ const onGoogleLogin = () => {
 }
 
 .auth-canvas::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 5%;
   right: -1px;
@@ -462,7 +474,7 @@ const onGoogleLogin = () => {
 
 .auth-card__divider::before,
 .auth-card__divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: #ede9e3;
@@ -546,7 +558,9 @@ const onGoogleLogin = () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-card__secure-note {

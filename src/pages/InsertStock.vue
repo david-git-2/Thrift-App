@@ -1,9 +1,7 @@
 <template>
   <q-page class="bw-page theme-app">
     <div class="bw-page__stack">
-      <AppPageHeader
-        title="Insert Stock"
-      />
+      <AppPageHeader title="Insert Stock" />
 
       <!-- State 1: No shipment selected -->
       <q-card v-if="!selectedShipment" class="app-card">
@@ -11,7 +9,9 @@
           <div class="insert-stock__icon-wrap q-mb-md">
             <q-icon name="inventory_2" size="2.5rem" color="primary" />
           </div>
-          <div class="text-h6 text-weight-bold text-grey-9 q-mb-xs">No shipment selected</div>
+          <div class="text-h6 text-weight-bold text-grey-9 q-mb-xs"
+            >No shipment selected</div
+          >
           <p class="text-body2 text-grey-7 q-mb-lg insert-stock__hint">
             Choose a shipment and box to start.
           </p>
@@ -36,20 +36,35 @@
               <q-icon name="workspaces" />
               Active workspace
             </div>
-            <q-chip icon="check_circle" color="positive" text-color="white" size="sm" dense class="q-px-sm">
+            <q-chip
+              icon="check_circle"
+              color="positive"
+              text-color="white"
+              size="sm"
+              dense
+              class="q-px-sm"
+            >
               Ready
             </q-chip>
           </div>
 
           <div class="q-mb-md">
-            <label class="text-caption text-weight-medium text-grey-6 uppercase block">Shipment</label>
-            <div class="text-subtitle1 text-weight-bold text-grey-9">{{ selectedShipment.name }}</div>
+            <label
+              class="text-caption text-weight-medium text-grey-6 uppercase block"
+              >Shipment</label
+            >
+            <div class="text-subtitle1 text-weight-bold text-grey-9">{{
+              selectedShipment.name
+            }}</div>
           </div>
 
           <div>
-            <label class="text-caption text-weight-medium text-grey-6 uppercase block">Box</label>
+            <label
+              class="text-caption text-weight-medium text-grey-6 uppercase block"
+              >Box</label
+            >
             <div class="text-subtitle1 text-weight-bold text-grey-9">
-              {{ selectedBox ? selectedBox.name : 'No box selected' }}
+              {{ selectedBox ? selectedBox.name : "No box selected" }}
             </div>
           </div>
         </q-card-section>
@@ -89,7 +104,10 @@
 
           <q-card-section class="q-pt-none q-gutter-md text-left">
             <div>
-              <label class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs">Shipment</label>
+              <label
+                class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs"
+                >Shipment</label
+              >
               <q-select
                 v-model="tempShipment"
                 :options="shipmentOptions"
@@ -104,7 +122,10 @@
             </div>
 
             <div>
-              <label class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs">Box</label>
+              <label
+                class="text-subtitle2 text-weight-bold text-grey-8 block q-mb-xs"
+                >Box</label
+              >
               <q-select
                 v-model="tempBox"
                 :options="boxOptions"
@@ -154,7 +175,10 @@
 
           <q-card-section class="q-pt-none q-gutter-md text-left">
             <div v-if="tempShipment" class="text-caption text-grey-6">
-              Shipment: <span class="text-weight-bold text-grey-8">{{ tempShipment.name }}</span>
+              Shipment:
+              <span class="text-weight-bold text-grey-8">{{
+                tempShipment.name
+              }}</span>
             </div>
 
             <q-input
@@ -211,175 +235,178 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { useThriftStore } from '../stores/thriftStore'
-import { useAuthStore } from '../stores/authStore'
-import { supabase } from '../boot/supabase'
-import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
-import AppPageHeader from '../components/AppPageHeader.vue'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import { useThriftStore } from "../stores/thriftStore";
+import { useAuthStore } from "../stores/authStore";
+import { supabase } from "../boot/supabase";
+import { refreshShipmentCurrencyIds } from "../composables/useThriftShipment";
+import AppPageHeader from "../components/AppPageHeader.vue";
 
-const router = useRouter()
-const $q = useQuasar()
-const thriftStore = useThriftStore()
-const authStore = useAuthStore()
+const router = useRouter();
+const $q = useQuasar();
+const thriftStore = useThriftStore();
+const authStore = useAuthStore();
 
-const dialogOpen = ref(false)
-const createBoxDialogOpen = ref(false)
-const loadingShipments = ref(false)
-const loadingBoxes = ref(false)
-const creatingBox = ref(false)
+const dialogOpen = ref(false);
+const createBoxDialogOpen = ref(false);
+const loadingShipments = ref(false);
+const loadingBoxes = ref(false);
+const creatingBox = ref(false);
 
-const shipmentOptions = ref<any[]>([])
-const boxOptions = ref<any[]>([])
+const shipmentOptions = ref<any[]>([]);
+const boxOptions = ref<any[]>([]);
 
-const tempShipment = ref<any>(null)
-const tempBox = ref<any>(null)
+const tempShipment = ref<any>(null);
+const tempBox = ref<any>(null);
 
 const newBoxForm = ref({
-  name: '',
+  name: "",
   weight: null as number | null,
-  received_weight: null as number | null,
-})
+  received_weight: null as number | null
+});
 
-const selectedShipment = computed(() => thriftStore.selectedShipment)
-const selectedBox = computed(() => thriftStore.selectedBox)
-const tenantId = computed(() => authStore.tenantId)
+const selectedShipment = computed(() => thriftStore.selectedShipment);
+const selectedBox = computed(() => thriftStore.selectedBox);
+const tenantId = computed(() => authStore.tenantId);
 
 const goToRegistration = () => {
-  router.push('/register-stock')
-}
+  router.push("/register-stock");
+};
 
 const openSelector = async () => {
-  thriftStore.clearShipmentBox()
-  tempShipment.value = null
-  tempBox.value = null
-  boxOptions.value = []
-  dialogOpen.value = true
-  await fetchShipments()
-}
+  thriftStore.clearShipmentBox();
+  tempShipment.value = null;
+  tempBox.value = null;
+  boxOptions.value = [];
+  dialogOpen.value = true;
+  await fetchShipments();
+};
 
 const hydrateShipmentIfNeeded = async () => {
-  const shipment = selectedShipment.value
-  if (!shipment || !tenantId.value) return
+  const shipment = selectedShipment.value;
+  if (!shipment || !tenantId.value) return;
   if (
     shipment.purchase_currency_id != null &&
     shipment.cost_currency_id != null
   ) {
-    return
+    return;
   }
   try {
-    const refreshed = await refreshShipmentCurrencyIds(shipment.id, tenantId.value)
+    const refreshed = await refreshShipmentCurrencyIds(
+      shipment.id,
+      tenantId.value
+    );
     if (refreshed) {
-      thriftStore.setSelection(refreshed, selectedBox.value)
+      thriftStore.setSelection(refreshed, selectedBox.value);
     }
   } catch (err) {
-    console.warn('Could not refresh shipment currency IDs:', err)
+    console.warn("Could not refresh shipment currency IDs:", err);
   }
-}
+};
 
 onMounted(() => {
-  void hydrateShipmentIfNeeded()
-})
+  void hydrateShipmentIfNeeded();
+});
 
 const fetchShipments = async () => {
-  if (!tenantId.value) return
-  loadingShipments.value = true
+  if (!tenantId.value) return;
+  loadingShipments.value = true;
   try {
     const { data, error } = await supabase
-      .from('thrift_shipments')
-      .select('id, name, tenant_id, purchase_currency_id, cost_currency_id')
-      .eq('tenant_id', tenantId.value)
-      .order('created_at', { ascending: false })
+      .from("thrift_shipments")
+      .select("id, name, tenant_id, purchase_currency_id, cost_currency_id")
+      .eq("tenant_id", tenantId.value)
+      .order("created_at", { ascending: false });
 
-    if (error) throw error
-    shipmentOptions.value = data || []
+    if (error) throw error;
+    shipmentOptions.value = data || [];
   } catch (err) {
-    console.error('Error fetching shipments:', err)
+    console.error("Error fetching shipments:", err);
   } finally {
-    loadingShipments.value = false
+    loadingShipments.value = false;
   }
-}
+};
 
 const fetchBoxes = async (shipmentId: number) => {
-  if (!tenantId.value) return
-  loadingBoxes.value = true
+  if (!tenantId.value) return;
+  loadingBoxes.value = true;
   try {
     const { data, error } = await supabase
-      .from('thrift_boxes')
-      .select('id, name, shipment_id, tenant_id')
-      .eq('shipment_id', shipmentId)
-      .eq('tenant_id', tenantId.value)
-      .order('name', { ascending: true })
+      .from("thrift_boxes")
+      .select("id, name, shipment_id, tenant_id")
+      .eq("shipment_id", shipmentId)
+      .eq("tenant_id", tenantId.value)
+      .order("name", { ascending: true });
 
-    if (error) throw error
-    boxOptions.value = data || []
+    if (error) throw error;
+    boxOptions.value = data || [];
   } catch (err) {
-    console.error('Error fetching boxes:', err)
+    console.error("Error fetching boxes:", err);
   } finally {
-    loadingBoxes.value = false
+    loadingBoxes.value = false;
   }
-}
+};
 
 const onShipmentChange = async (shipment: any) => {
-  tempBox.value = null
-  boxOptions.value = []
+  tempBox.value = null;
+  boxOptions.value = [];
   if (shipment) {
-    await fetchBoxes(shipment.id)
+    await fetchBoxes(shipment.id);
   }
-}
+};
 
 const openCreateBoxDialog = () => {
-  if (!tempShipment.value) return
+  if (!tempShipment.value) return;
   newBoxForm.value = {
-    name: '',
+    name: "",
     weight: null,
-    received_weight: null,
-  }
-  createBoxDialogOpen.value = true
-}
+    received_weight: null
+  };
+  createBoxDialogOpen.value = true;
+};
 
 const saveNewBox = async () => {
-  const name = newBoxForm.value.name.trim()
-  if (!name || !tempShipment.value || !tenantId.value) return
+  const name = newBoxForm.value.name.trim();
+  if (!name || !tempShipment.value || !tenantId.value) return;
 
-  creatingBox.value = true
+  creatingBox.value = true;
   try {
     const { data, error } = await supabase
-      .from('thrift_boxes')
+      .from("thrift_boxes")
       .insert({
         tenant_id: tenantId.value,
         shipment_id: tempShipment.value.id,
         name,
         weight: newBoxForm.value.weight ?? null,
         received_weight: newBoxForm.value.received_weight ?? null,
-        inserted_by: authStore.user?.email || 'app-user',
+        inserted_by: authStore.user?.email || "app-user"
       })
-      .select('id, name, shipment_id, tenant_id')
-      .single()
+      .select("id, name, shipment_id, tenant_id")
+      .single();
 
-    if (error) throw error
+    if (error) throw error;
 
-    await fetchBoxes(tempShipment.value.id)
-    tempBox.value = data
-    createBoxDialogOpen.value = false
+    await fetchBoxes(tempShipment.value.id);
+    tempBox.value = data;
+    createBoxDialogOpen.value = false;
 
-    $q.notify({ type: 'positive', message: `Box "${name}" created` })
+    $q.notify({ type: "positive", message: `Box "${name}" created` });
   } catch (err) {
-    console.error('Error creating box:', err)
-    const message = err instanceof Error ? err.message : 'Failed to create box'
-    $q.notify({ type: 'negative', message })
+    console.error("Error creating box:", err);
+    const message = err instanceof Error ? err.message : "Failed to create box";
+    $q.notify({ type: "negative", message });
   } finally {
-    creatingBox.value = false
+    creatingBox.value = false;
   }
-}
+};
 
 const onConfirm = () => {
-  thriftStore.setSelection(tempShipment.value, tempBox.value)
-  dialogOpen.value = false
-  goToRegistration()
-}
+  thriftStore.setSelection(tempShipment.value, tempBox.value);
+  dialogOpen.value = false;
+  goToRegistration();
+};
 </script>
 
 <style scoped>

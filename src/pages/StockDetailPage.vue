@@ -77,7 +77,10 @@
                 />
               </div>
             </div>
-            <div v-else class="stock-detail-hero__placeholder relative-position text-center q-py-md">
+            <div
+              v-else
+              class="stock-detail-hero__placeholder relative-position text-center q-py-md"
+            >
               <q-chip
                 dense
                 :color="statusColor(stock.status)"
@@ -98,20 +101,31 @@
                   @click="startCameraCapture"
                 />
               </div>
-              <div class="text-caption text-grey-6 q-mt-xs">Capture or upload a product photo</div>
+              <div class="text-caption text-grey-6 q-mt-xs"
+                >Capture or upload a product photo</div
+              >
             </div>
           </q-card-section>
         </q-card>
 
         <q-card class="app-card q-mb-sm">
           <q-card-section class="q-pa-sm">
-            <div class="text-caption text-grey-6">{{ stock.shipment_name }} · {{ stock.box_name || 'No box' }}</div>
-            <div class="text-caption text-mono text-grey-7 q-mt-xs">{{ stock.barcode }}</div>
+            <div class="text-caption text-grey-6"
+              >{{ stock.shipment_name }} · {{ stock.box_name || "No box" }}</div
+            >
+            <div class="text-caption text-mono text-grey-7 q-mt-xs">{{
+              stock.barcode
+            }}</div>
           </q-card-section>
         </q-card>
 
         <q-form @submit.prevent="saveStock">
-          <q-expansion-item default-opened icon="inventory_2" label="Details" class="app-card q-mb-sm">
+          <q-expansion-item
+            default-opened
+            icon="inventory_2"
+            label="Details"
+            class="app-card q-mb-sm"
+          >
             <q-card-section class="q-gutter-y-sm q-pt-none">
               <q-input v-model="form.brand_name" outlined dense label="Brand" />
               <q-select
@@ -168,14 +182,26 @@
                   <q-input v-model="form.size" outlined dense label="Size" />
                 </div>
               </div>
-              <q-input v-model="form.note" outlined dense type="textarea" rows="2" label="Note" />
+              <q-input
+                v-model="form.note"
+                outlined
+                dense
+                type="textarea"
+                rows="2"
+                label="Note"
+              />
             </q-card-section>
           </q-expansion-item>
 
-          <q-expansion-item icon="sell" label="Pricing" default-opened class="app-card q-mb-sm">
+          <q-expansion-item
+            icon="sell"
+            label="Pricing"
+            default-opened
+            class="app-card q-mb-sm"
+          >
             <q-card-section class="q-gutter-y-sm q-pt-none">
               <div class="text-caption text-grey-7 q-mb-xs">
-                Purchase ({{ purchaseCurrency?.code ?? '—' }})
+                Purchase ({{ purchaseCurrency?.code ?? "—" }})
               </div>
               <div class="row q-col-gutter-sm">
                 <div class="col-12 col-sm-6">
@@ -186,7 +212,7 @@
                     type="number"
                     step="0.01"
                     min="0"
-                    label="Origin purchase price"
+                    label="Origin unit price"
                     :prefix="purchaseCurrencySymbol"
                   />
                 </div>
@@ -198,7 +224,7 @@
                     type="number"
                     step="0.01"
                     min="0"
-                    label="Extra origin purchase expense"
+                    label="Extra origin unit price"
                     :prefix="purchaseCurrencySymbol"
                   />
                 </div>
@@ -207,49 +233,25 @@
               <q-separator class="q-my-sm" />
 
               <div class="text-caption text-grey-7 q-mb-xs">
-                Cost / pricing ({{ costCurrency?.code ?? '—' }})
+                Pricing ({{ costCurrency?.code ?? "—" }})
               </div>
               <q-input
-                v-model.number="pricing.cost_of_goods_sold"
+                v-model.number="pricing.listed_unit_price"
                 outlined
                 dense
                 type="number"
-                step="0.01"
-                :prefix="costCurrencySymbol"
-                label="COGS cost"
-              />
-              <q-input
-                v-model.number="pricing.extra_expense_cost"
-                outlined
-                dense
-                type="number"
-                step="0.01"
-                min="0"
-                :prefix="costCurrencySymbol"
-                label="Extra expense cost"
-              />
-              <q-input
-                v-model.number="pricing.target_price"
-                outlined
-                dense
-                type="number"
-                step="0.01"
-                :prefix="costCurrencySymbol"
-                label="Target price"
-              />
-              <q-input
-                v-model.number="pricing.listed_price"
-                outlined
-                dense
-                type="number"
-                step="0.01"
+                step="1"
                 :prefix="costCurrencySymbol"
                 label="Listed price"
               />
             </q-card-section>
           </q-expansion-item>
 
-          <q-expansion-item icon="place" label="Location" class="app-card q-mb-md">
+          <q-expansion-item
+            icon="place"
+            label="Location"
+            class="app-card q-mb-md"
+          >
             <q-card-section class="q-gutter-y-sm q-pt-none">
               <q-select
                 v-model="form.shelf_id"
@@ -295,7 +297,7 @@
               no-caps
               size="md"
               class="q-px-lg app-cta-btn"
-              style="min-height: 40px !important;"
+              style="min-height: 40px !important"
               :loading="saving"
             />
           </div>
@@ -310,17 +312,23 @@
         />
 
         <q-dialog v-model="imageRemoveConfirmOpen" persistent>
-          <q-card style="width: 350px; max-width: 90vw;" class="q-pa-md">
+          <q-card style="width: 350px; max-width: 90vw" class="q-pa-md">
             <q-card-section class="row items-center q-pb-none">
               <q-avatar icon="image" color="warning" text-color="white" />
               <span class="q-ml-sm text-weight-bold">Remove product image</span>
             </q-card-section>
             <q-card-section>
-              Remove this product image? The change is applied when you save the stock item.
+              Remove this product image? The change is applied when you save the
+              stock item.
             </q-card-section>
             <q-card-actions align="right">
               <q-btn flat label="Cancel" color="grey-7" v-close-popup />
-              <q-btn color="negative" label="Remove" no-caps @click="confirmRemoveImage" />
+              <q-btn
+                color="negative"
+                label="Remove"
+                no-caps
+                @click="confirmRemoveImage"
+              />
             </q-card-actions>
           </q-card>
         </q-dialog>
@@ -336,315 +344,327 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { Capacitor } from '@capacitor/core'
-import { useAuthStore } from '../stores/authStore'
-import { useProductPhoto } from '../composables/useProductPhoto'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import { Capacitor } from "@capacitor/core";
+import { useAuthStore } from "../stores/authStore";
+import { useProductPhoto } from "../composables/useProductPhoto";
 import {
   uploadStockImage,
   cleanupStockImageAssets,
-  type StockImageUploadResult,
-} from '../utils/stockImageClient'
-import { deleteCloudinaryByToken } from '../utils/cloudinaryClient'
+  type StockImageUploadResult
+} from "../utils/stockImageClient";
+import { deleteCloudinaryByToken } from "../utils/cloudinaryClient";
 import {
   fetchThriftCategories,
   fetchThriftShelves,
   fetchThriftTypes,
-  type ThriftCatalogOption,
-} from '../composables/useThriftCatalog'
-import { useThriftCurrencyStore } from '../stores/thriftCurrencyStore'
-import { fetchThriftStockById, type ThriftStockDetail } from '../composables/useThriftStockDetail'
-import { updateThriftStock } from '../composables/useThriftStockUpdate'
-import { refreshShipmentCurrencyIds } from '../composables/useThriftShipment'
+  type ThriftCatalogOption
+} from "../composables/useThriftCatalog";
+import { useThriftCurrencyStore } from "../stores/thriftCurrencyStore";
+import {
+  fetchThriftStockById,
+  type ThriftStockDetail
+} from "../composables/useThriftStockDetail";
+import { updateThriftStock } from "../composables/useThriftStockUpdate";
+import { refreshShipmentCurrencyIds } from "../composables/useThriftShipment";
 import {
   THRIFT_CONDITION_OPTIONS,
-  THRIFT_SECTION_OPTIONS,
-} from '../constants/thriftEnums'
-import PageInitialLoader from '../components/PageInitialLoader.vue'
-import SmartImage from '../components/SmartImage.vue'
+  THRIFT_SECTION_OPTIONS
+} from "../constants/thriftEnums";
+import PageInitialLoader from "../components/PageInitialLoader.vue";
+import SmartImage from "../components/SmartImage.vue";
 
-const route = useRoute()
-const router = useRouter()
-const $q = useQuasar()
-const authStore = useAuthStore()
-const currencyStore = useThriftCurrencyStore()
+const route = useRoute();
+const router = useRouter();
+const $q = useQuasar();
+const authStore = useAuthStore();
+const currencyStore = useThriftCurrencyStore();
 
-const { capturePhoto, cropPhoto } = useProductPhoto()
+const { capturePhoto, cropPhoto } = useProductPhoto();
 
-const loading = ref(true)
-const saving = ref(false)
-const stock = ref<ThriftStockDetail | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
-const smartImageRef = ref<InstanceType<typeof SmartImage> | null>(null)
-const imageRemoveConfirmOpen = ref(false)
-const previewWebPath = ref('')
-const webBlob = ref<Blob | null>(null)
-const imageRemoved = ref(false)
-const originalImageUrl = ref('')
-const originalDriveFileId = ref('')
-const shipmentCostCurrencyId = ref<number | null>(null)
-const shipmentPurchaseCurrencyId = ref<number | null>(null)
+const loading = ref(true);
+const saving = ref(false);
+const stock = ref<ThriftStockDetail | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+const smartImageRef = ref<InstanceType<typeof SmartImage> | null>(null);
+const imageRemoveConfirmOpen = ref(false);
+const previewWebPath = ref("");
+const webBlob = ref<Blob | null>(null);
+const imageRemoved = ref(false);
+const originalImageUrl = ref("");
+const originalDriveFileId = ref("");
+const shipmentCostCurrencyId = ref<number | null>(null);
+const shipmentPurchaseCurrencyId = ref<number | null>(null);
 
-const categoryOptions = ref<ThriftCatalogOption[]>([])
-const typeOptions = ref<ThriftCatalogOption[]>([])
-const shelfOptions = ref<Array<{ id: number; shelf_code: string }>>([])
+const categoryOptions = ref<ThriftCatalogOption[]>([]);
+const typeOptions = ref<ThriftCatalogOption[]>([]);
+const shelfOptions = ref<Array<{ id: number; shelf_code: string }>>([]);
 
 const form = ref({
-  brand_name: '',
+  brand_name: "",
   category_id: null as number | null,
   type_id: null as number | null,
   section: null as string | null,
   shelf_id: null as number | null,
-  color: '',
-  size: '',
+  color: "",
+  size: "",
   condition: null as string | null,
-  status: 'AVAILABLE',
+  status: "AVAILABLE",
   product_weight: null as number | null,
   extra_weight: null as number | null,
-  note: '',
-})
+  note: ""
+});
 
 const pricing = ref({
-  cost_of_goods_sold: 0,
-  target_price: 0,
-  listed_price: 0,
-  extra_expense_cost: 0,
-})
+  listed_unit_price: 0
+});
 
-const originPurchasePrice = ref(0)
-const extraOriginPurchaseExpense = ref(0)
+const originPurchasePrice = ref(0);
+const extraOriginPurchaseExpense = ref(0);
 
-const sectionOptions = [...THRIFT_SECTION_OPTIONS]
-const conditionOptions = [...THRIFT_CONDITION_OPTIONS]
-const statusOptions = ['AVAILABLE', 'OUT_OF_STOCK', 'DAMAGED', 'STOLEN']
+const sectionOptions = [...THRIFT_SECTION_OPTIONS];
+const conditionOptions = [...THRIFT_CONDITION_OPTIONS];
+const statusOptions = ["AVAILABLE", "OUT_OF_STOCK", "DAMAGED", "STOLEN"];
 
 const costCurrency = computed(() => {
-  const id = shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId
-  return currencyStore.currencyById(id)
-})
+  const id =
+    shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId;
+  return currencyStore.currencyById(id);
+});
 const purchaseCurrency = computed(() => {
-  const id = shipmentPurchaseCurrencyId.value ?? authStore.thriftDefaultPurchaseCurrencyId
-  return currencyStore.currencyById(id)
-})
-const costCurrencySymbol = computed(() => costCurrency.value?.symbol ?? '')
-const purchaseCurrencySymbol = computed(() => purchaseCurrency.value?.symbol ?? '')
+  const id =
+    shipmentPurchaseCurrencyId.value ??
+    authStore.thriftDefaultPurchaseCurrencyId;
+  return currencyStore.currencyById(id);
+});
+const costCurrencySymbol = computed(() => costCurrency.value?.symbol ?? "");
+const purchaseCurrencySymbol = computed(
+  () => purchaseCurrency.value?.symbol ?? ""
+);
 
-const stockId = computed(() => Number(route.params.id))
+const stockId = computed(() => Number(route.params.id));
 
-const canCrop = computed(() => Capacitor.isNativePlatform() && !!previewImageUrl.value)
+const canCrop = computed(
+  () => Capacitor.isNativePlatform() && !!previewImageUrl.value
+);
 
 const previewImageUrl = computed(() => {
-  if (imageRemoved.value) return ''
-  if (previewWebPath.value) return previewWebPath.value
-  return stock.value?.image_url || ''
-})
+  if (imageRemoved.value) return "";
+  if (previewWebPath.value) return previewWebPath.value;
+  return stock.value?.image_url || "";
+});
 
 function revokePreviewUrl() {
-  if (previewWebPath.value.startsWith('blob:')) {
-    URL.revokeObjectURL(previewWebPath.value)
+  if (previewWebPath.value.startsWith("blob:")) {
+    URL.revokeObjectURL(previewWebPath.value);
   }
 }
 
-function resetImageEditState(imageUrl: string, driveFileId = '') {
-  revokePreviewUrl()
-  previewWebPath.value = ''
-  webBlob.value = null
-  imageRemoved.value = false
-  originalImageUrl.value = imageUrl || ''
-  originalDriveFileId.value = driveFileId || ''
+function resetImageEditState(imageUrl: string, driveFileId = "") {
+  revokePreviewUrl();
+  previewWebPath.value = "";
+  webBlob.value = null;
+  imageRemoved.value = false;
+  originalImageUrl.value = imageUrl || "";
+  originalDriveFileId.value = driveFileId || "";
 }
 
 const goBack = () => {
-  router.push('/stock-list')
-}
+  router.push("/stock-list");
+};
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'AVAILABLE':
-      return 'positive'
-    case 'OUT_OF_STOCK':
-      return 'grey-6'
-    case 'DAMAGED':
-      return 'warning'
-    case 'STOLEN':
-      return 'negative'
+    case "AVAILABLE":
+      return "positive";
+    case "OUT_OF_STOCK":
+      return "grey-6";
+    case "DAMAGED":
+      return "warning";
+    case "STOLEN":
+      return "negative";
     default:
-      return 'primary'
+      return "primary";
   }
-}
+};
 
 const populateForm = (detail: ThriftStockDetail) => {
   form.value = {
-    brand_name: detail.brand_name || '',
+    brand_name: detail.brand_name || "",
     category_id: detail.category_id,
     type_id: detail.type_id,
     section: detail.section,
     shelf_id: detail.shelf_id,
-    color: detail.color || '',
-    size: detail.size || '',
+    color: detail.color || "",
+    size: detail.size || "",
     condition: detail.condition,
     status: detail.status,
     product_weight: detail.product_weight,
     extra_weight: detail.extra_weight,
-    note: detail.note || '',
-  }
+    note: detail.note || ""
+  };
   pricing.value = {
-    cost_of_goods_sold: detail.cost_of_goods_sold,
-    target_price: detail.target_price,
-    listed_price: detail.listed_price,
-    extra_expense_cost: detail.extra_expense_cost,
-  }
-  originPurchasePrice.value = detail.origin_purchase_price ?? 0
-  extraOriginPurchaseExpense.value = detail.extra_origin_purchase_expense ?? 0
-  resetImageEditState(detail.image_url, detail.drive_file_id)
-}
+    listed_unit_price: detail.listed_unit_price
+  };
+  originPurchasePrice.value = detail.origin_unit_price ?? 0;
+  extraOriginPurchaseExpense.value = detail.extra_origin_unit_price ?? 0;
+  resetImageEditState(detail.image_url, detail.drive_file_id);
+};
 
 const startCameraCapture = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
-      const result = await capturePhoto()
+      const result = await capturePhoto();
       if (result) {
-        revokePreviewUrl()
-        previewWebPath.value = result.webPath
-        webBlob.value = result.blob
-        imageRemoved.value = false
-        $q.notify({ type: 'positive', message: 'Photo captured' })
+        revokePreviewUrl();
+        previewWebPath.value = result.webPath;
+        webBlob.value = result.blob;
+        imageRemoved.value = false;
+        $q.notify({ type: "positive", message: "Photo captured" });
       }
     } catch (err) {
-      console.error('Camera capture error:', err)
-      const message = err instanceof Error ? err.message : 'Camera error'
-      $q.notify({ type: 'negative', message: `${message}. Try file upload instead.` })
-      fileInput.value?.click()
+      console.error("Camera capture error:", err);
+      const message = err instanceof Error ? err.message : "Camera error";
+      $q.notify({
+        type: "negative",
+        message: `${message}. Try file upload instead.`
+      });
+      fileInput.value?.click();
     }
   } else {
-    fileInput.value?.click()
+    fileInput.value?.click();
   }
-}
+};
 
 const startImageCrop = async () => {
-  if (!previewImageUrl.value) return
+  if (!previewImageUrl.value) return;
 
   if (Capacitor.isNativePlatform()) {
     try {
-      const result = await cropPhoto(previewImageUrl.value)
+      const result = await cropPhoto(previewImageUrl.value);
       if (result) {
-        revokePreviewUrl()
-        previewWebPath.value = result.webPath
-        webBlob.value = result.blob
-        imageRemoved.value = false
-        $q.notify({ type: 'positive', message: 'Photo cropped' })
+        revokePreviewUrl();
+        previewWebPath.value = result.webPath;
+        webBlob.value = result.blob;
+        imageRemoved.value = false;
+        $q.notify({ type: "positive", message: "Photo cropped" });
       }
     } catch (err) {
-      console.error('Crop error:', err)
-      const message = err instanceof Error ? err.message : 'Crop failed'
-      $q.notify({ type: 'negative', message })
+      console.error("Crop error:", err);
+      const message = err instanceof Error ? err.message : "Crop failed";
+      $q.notify({ type: "negative", message });
     }
   } else {
-    $q.notify({ type: 'info', message: 'Crop is only available in the native app' })
+    $q.notify({
+      type: "info",
+      message: "Crop is only available in the native app"
+    });
   }
-}
+};
 
 const handleWebFileChange = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
 
-  revokePreviewUrl()
-  webBlob.value = file
-  previewWebPath.value = URL.createObjectURL(file)
-  imageRemoved.value = false
-  target.value = ''
-  $q.notify({ type: 'positive', message: 'Photo selected' })
-}
+  revokePreviewUrl();
+  webBlob.value = file;
+  previewWebPath.value = URL.createObjectURL(file);
+  imageRemoved.value = false;
+  target.value = "";
+  $q.notify({ type: "positive", message: "Photo selected" });
+};
 
 const clearImage = () => {
-  revokePreviewUrl()
-  previewWebPath.value = ''
-  webBlob.value = null
-  imageRemoved.value = true
-}
+  revokePreviewUrl();
+  previewWebPath.value = "";
+  webBlob.value = null;
+  imageRemoved.value = true;
+};
 
 const confirmRemoveImage = () => {
-  clearImage()
-  imageRemoveConfirmOpen.value = false
-}
+  clearImage();
+  imageRemoveConfirmOpen.value = false;
+};
 
 const openImagePreview = () => {
-  smartImageRef.value?.openLightbox()
-}
+  smartImageRef.value?.openLightbox();
+};
 
 const loadStock = async () => {
-  const tenantId = authStore.tenantId
+  const tenantId = authStore.tenantId;
   if (!tenantId) {
-    $q.notify({ type: 'negative', message: 'No workspace selected' })
-    loading.value = false
-    return
+    $q.notify({ type: "negative", message: "No workspace selected" });
+    loading.value = false;
+    return;
   }
 
   if (!Number.isFinite(stockId.value) || stockId.value <= 0) {
-    $q.notify({ type: 'negative', message: 'Invalid stock item' })
-    loading.value = false
-    goBack()
-    return
+    $q.notify({ type: "negative", message: "Invalid stock item" });
+    loading.value = false;
+    goBack();
+    return;
   }
 
-  loading.value = true
+  loading.value = true;
   try {
-    const detail = await fetchThriftStockById(tenantId, stockId.value)
+    const detail = await fetchThriftStockById(tenantId, stockId.value);
     if (!detail) {
-      $q.notify({ type: 'warning', message: 'Stock item not found' })
-      goBack()
-      return
+      $q.notify({ type: "warning", message: "Stock item not found" });
+      goBack();
+      return;
     }
 
-    stock.value = detail
-    populateForm(detail)
+    stock.value = detail;
+    populateForm(detail);
 
     await Promise.all([
       currencyStore.loadCurrencies(),
-      fetchThriftCategories(tenantId).then((r) => {
-        categoryOptions.value = r
+      fetchThriftCategories(tenantId).then(r => {
+        categoryOptions.value = r;
       }),
-      fetchThriftTypes(tenantId).then((r) => {
-        typeOptions.value = r
+      fetchThriftTypes(tenantId).then(r => {
+        typeOptions.value = r;
       }),
-      fetchThriftShelves(tenantId).then((r) => {
-        shelfOptions.value = r
-      }),
-    ])
+      fetchThriftShelves(tenantId).then(r => {
+        shelfOptions.value = r;
+      })
+    ]);
 
-    const shipment = await refreshShipmentCurrencyIds(detail.shipment_id, tenantId)
-    shipmentCostCurrencyId.value = shipment?.cost_currency_id ?? null
-    shipmentPurchaseCurrencyId.value = shipment?.purchase_currency_id ?? null
+    const shipment = await refreshShipmentCurrencyIds(
+      detail.shipment_id,
+      tenantId
+    );
+    shipmentCostCurrencyId.value = shipment?.cost_currency_id ?? null;
+    shipmentPurchaseCurrencyId.value = shipment?.purchase_currency_id ?? null;
   } catch (err) {
-    console.error('Load stock failed:', err)
-    const message =
-      err instanceof Error ? err.message : 'Failed to load stock'
-    $q.notify({ type: 'negative', message })
+    console.error("Load stock failed:", err);
+    const message = err instanceof Error ? err.message : "Failed to load stock";
+    $q.notify({ type: "negative", message });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const saveStock = async () => {
-  if (!stock.value) return
-  saving.value = true
-  let pendingDeleteToken = ''
-  let orphanUpload: StockImageUploadResult | null = null
+  if (!stock.value) return;
+  saving.value = true;
+  let pendingDeleteToken = "";
+  let orphanUpload: StockImageUploadResult | null = null;
   try {
-    let imageUrl: string | null | undefined
-    let driveFilePayload: string | null | undefined
+    let imageUrl: string | null | undefined;
+    let driveFilePayload: string | null | undefined;
 
     if (webBlob.value) {
-      const barcode = stock.value.barcode?.trim()
-      const tenantId = authStore.tenantId
+      const barcode = stock.value.barcode?.trim();
+      const tenantId = authStore.tenantId;
       if (!barcode) {
-        throw new Error('Barcode is required before uploading an image.')
+        throw new Error("Barcode is required before uploading an image.");
       }
       if (!tenantId) {
-        throw new Error('Workspace is required before uploading an image.')
+        throw new Error("Workspace is required before uploading an image.");
       }
 
       const uploaded = await uploadStockImage(webBlob.value, {
@@ -652,19 +672,19 @@ const saveStock = async () => {
         shipmentId: stock.value.shipment_id,
         tenantId,
         stockId: stock.value.id,
-        replaceImageUrl: originalImageUrl.value,
-      })
-      orphanUpload = uploaded
-      imageUrl = uploaded.secureUrl
-      driveFilePayload = null
-      pendingDeleteToken = uploaded.deleteToken || ''
+        replaceImageUrl: originalImageUrl.value
+      });
+      orphanUpload = uploaded;
+      imageUrl = uploaded.secureUrl;
+      driveFilePayload = null;
+      pendingDeleteToken = uploaded.deleteToken || "";
     } else if (imageRemoved.value && originalImageUrl.value) {
-      imageUrl = null
-      driveFilePayload = null
+      imageUrl = null;
+      driveFilePayload = null;
     }
 
-    const previousImageUrl = originalImageUrl.value
-    const previousDriveFileId = originalDriveFileId.value
+    const previousImageUrl = originalImageUrl.value;
+    const previousDriveFileId = originalDriveFileId.value;
     const updateParams: Parameters<typeof updateThriftStock>[0] = {
       stockId: stock.value.id,
       stock: {
@@ -680,54 +700,56 @@ const saveStock = async () => {
         product_weight: form.value.product_weight,
         extra_weight: form.value.extra_weight,
         note: form.value.note || null,
-        origin_purchase_price: originPurchasePrice.value || null,
-        extra_origin_purchase_expense: extraOriginPurchaseExpense.value || null,
+        origin_unit_price: originPurchasePrice.value || null,
+        extra_origin_unit_price: extraOriginPurchaseExpense.value || null
       },
-      pricing: pricing.value,
-      insertedBy: authStore.user?.email || 'app-user',
-    }
+      pricing: {
+        listed_unit_price: pricing.value.listed_unit_price
+      },
+      insertedBy: authStore.user?.email || "app-user"
+    };
 
     if (imageUrl !== undefined) {
-      updateParams.imageUrl = imageUrl
-      updateParams.driveFileId = driveFilePayload ?? null
+      updateParams.imageUrl = imageUrl;
+      updateParams.driveFileId = driveFilePayload ?? null;
     }
 
-    await updateThriftStock(updateParams)
+    await updateThriftStock(updateParams);
 
     if (imageUrl !== undefined && (previousImageUrl || previousDriveFileId)) {
-      const savedUrl = imageUrl || ''
+      const savedUrl = imageUrl || "";
       if (!savedUrl || savedUrl !== previousImageUrl) {
         await cleanupStockImageAssets({
-          imageUrl: previousImageUrl,
-        })
+          imageUrl: previousImageUrl
+        });
       }
     }
 
-    orphanUpload = null
-    $q.notify({ type: 'positive', message: 'Stock updated' })
-    goBack()
+    orphanUpload = null;
+    $q.notify({ type: "positive", message: "Stock updated" });
+    goBack();
   } catch (err) {
     if (orphanUpload) {
       await cleanupStockImageAssets({
-        imageUrl: orphanUpload.secureUrl,
-      })
+        imageUrl: orphanUpload.secureUrl
+      });
     } else if (pendingDeleteToken) {
-      await deleteCloudinaryByToken(pendingDeleteToken)
+      await deleteCloudinaryByToken(pendingDeleteToken);
     }
-    const message = err instanceof Error ? err.message : 'Save failed'
-    $q.notify({ type: 'negative', message })
+    const message = err instanceof Error ? err.message : "Save failed";
+    $q.notify({ type: "negative", message });
   } finally {
-    saving.value = false
+    saving.value = false;
   }
-}
+};
 
 onMounted(() => {
-  void loadStock()
-})
+  void loadStock();
+});
 
 onBeforeUnmount(() => {
-  revokePreviewUrl()
-})
+  revokePreviewUrl();
+});
 </script>
 
 <style scoped>

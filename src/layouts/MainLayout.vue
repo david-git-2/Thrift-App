@@ -8,7 +8,9 @@
           </div>
           <q-toolbar-title class="q-pl-none">
             <div class="app-header__title">Thrift App</div>
-            <div v-if="tenantName" class="app-header__tenant">{{ tenantName }}</div>
+            <div v-if="tenantName" class="app-header__tenant">{{
+              tenantName
+            }}</div>
           </q-toolbar-title>
         </div>
 
@@ -27,7 +29,9 @@
               <q-list style="min-width: 200px">
                 <q-item>
                   <q-item-section>
-                    <q-item-label class="text-weight-medium">{{ userEmail }}</q-item-label>
+                    <q-item-label class="text-weight-medium">{{
+                      userEmail
+                    }}</q-item-label>
                     <q-item-label caption>v{{ APP_VERSION }}</q-item-label>
                   </q-item-section>
                 </q-item>
@@ -86,32 +90,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
-import { supabase } from '../boot/supabase'
-import { APP_VERSION } from '../constants/appVersion'
-import BarcodeScanOverlay from '../components/BarcodeScanOverlay.vue'
-import BrandMark from '../components/BrandMark.vue'
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/authStore";
+import { supabase } from "../boot/supabase";
+import { APP_VERSION } from "../constants/appVersion";
+import BarcodeScanOverlay from "../components/BarcodeScanOverlay.vue";
+import BrandMark from "../components/BrandMark.vue";
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
-const activeTab = ref('insert-stock')
-const avatarBroken = ref(false)
+const activeTab = ref("insert-stock");
+const avatarBroken = ref(false);
 
-const tenantName = computed(() => authStore.tenant?.name ?? '')
-const userEmail = computed(() => authStore.user?.email ?? '')
-const avatarUrl = computed(() => authStore.user?.avatarUrl ?? '')
-const showAvatarImage = computed(() => Boolean(avatarUrl.value) && !avatarBroken.value)
+const tenantName = computed(() => authStore.tenant?.name ?? "");
+const userEmail = computed(() => authStore.user?.email ?? "");
+const avatarUrl = computed(() => authStore.user?.avatarUrl ?? "");
+const showAvatarImage = computed(
+  () => Boolean(avatarUrl.value) && !avatarBroken.value
+);
 
 const onAvatarError = () => {
-  avatarBroken.value = true
-}
+  avatarBroken.value = true;
+};
 
 const onLogout = async () => {
-  authStore.clearAccess()
-  await supabase.auth.signOut()
-  await router.replace('/login')
-}
+  authStore.clearAccess();
+  await supabase.auth.signOut();
+  await router.replace("/login");
+};
 </script>

@@ -1,43 +1,42 @@
-import { supabase } from '../boot/supabase'
+import { supabase } from "../boot/supabase";
 
-export type { CloudinaryUploadResult } from '../utils/cloudinaryClient'
-export { uploadToCloudinary } from '../utils/cloudinaryClient'
+export type { CloudinaryUploadResult } from "../utils/cloudinaryClient";
+export { uploadToCloudinary } from "../utils/cloudinaryClient";
 export {
   uploadStockImage,
   cleanupStockImageAssets,
   StockImageDuplicateError,
-  type StockImageUploadResult,
-} from '../utils/stockImageClient'
+  type StockImageUploadResult
+} from "../utils/stockImageClient";
 
 export interface RegisterStockParams {
-  tenantId: number
-  barcode: string
-  shipmentId: number
-  imageUrl: string
-  driveFileId?: string | null
-  brandName?: string | null
-  categoryId?: number | null
-  typeId?: number | null
-  section?: string | null
-  shelfId?: number | null
-  color?: string | null
-  size?: string | null
-  condition?: string | null
-  boxId?: number
-  productWeight?: number | null
-  extraWeight?: number | null
-  note?: string
-  originPurchasePrice?: number | null
-  extraOriginPurchaseExpense?: number | null
-  costOfGoodsSold: number
-  targetPrice: number
-  listedPrice: number
-  extraExpenseCost?: number | null
-  insertedBy: string
+  tenantId: number;
+  barcode: string;
+  shipmentId: number;
+  imageUrl: string;
+  driveFileId?: string | null;
+  brandName?: string | null;
+  categoryId?: number | null;
+  typeId?: number | null;
+  section?: string | null;
+  shelfId?: number | null;
+  color?: string | null;
+  size?: string | null;
+  condition?: string | null;
+  boxId?: number;
+  productWeight?: number | null;
+  extraWeight?: number | null;
+  note?: string;
+  originUnitPrice?: number | null;
+  extraOriginUnitPrice?: number | null;
+  listedUnitPrice?: number | null;
+  insertedBy: string;
 }
 
-export async function registerThriftStockFromApp(params: RegisterStockParams): Promise<number> {
-  const { data, error } = await supabase.rpc('register_thrift_stock_from_app', {
+export async function registerThriftStockFromApp(
+  params: RegisterStockParams
+): Promise<number> {
+  const { data, error } = await supabase.rpc("register_thrift_stock_from_app", {
     p_tenant_id: params.tenantId,
     p_barcode: params.barcode,
     p_shipment_id: params.shipmentId,
@@ -53,35 +52,32 @@ export async function registerThriftStockFromApp(params: RegisterStockParams): P
     p_box_id: params.boxId ?? null,
     p_product_weight: params.productWeight ?? null,
     p_extra_weight: params.extraWeight ?? null,
-    p_note: params.note ?? '',
-    p_origin_purchase_price: params.originPurchasePrice ?? null,
-    p_extra_origin_purchase_expense: params.extraOriginPurchaseExpense ?? null,
-    p_cost_of_goods_sold: params.costOfGoodsSold,
-    p_target_price: params.targetPrice,
-    p_listed_price: params.listedPrice,
-    p_extra_expense_cost: params.extraExpenseCost ?? null,
-    p_inserted_by: params.insertedBy,
-  })
+    p_note: params.note ?? "",
+    p_origin_unit_price: params.originUnitPrice ?? null,
+    p_extra_origin_unit_price: params.extraOriginUnitPrice ?? null,
+    p_listed_unit_price: params.listedUnitPrice ?? null,
+    p_inserted_by: params.insertedBy
+  });
 
-  if (error) throw error
-  const stockId = data as number
+  if (error) throw error;
+  const stockId = data as number;
 
   if (params.driveFileId) {
-    await attachDriveFileIdToStock(stockId, params.driveFileId)
+    await attachDriveFileIdToStock(stockId, params.driveFileId);
   }
 
-  return stockId
+  return stockId;
 }
 
 export async function attachDriveFileIdToStock(
   stockId: number,
-  driveFileId: string,
+  driveFileId: string
 ): Promise<void> {
   const { error } = await supabase
-    .from('thrift_stock_images')
+    .from("thrift_stock_images")
     .update({ drive_file_id: driveFileId })
-    .eq('stock_id', stockId)
-    .eq('is_primary', true)
+    .eq("stock_id", stockId)
+    .eq("is_primary", true);
 
-  if (error) throw error
+  if (error) throw error;
 }

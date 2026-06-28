@@ -1,6 +1,7 @@
 # CLAUDE.md — Project AI Rules (Token-Optimized)
 
 ## 🔴 PRIME DIRECTIVE
+
 Every token costs money and latency. Default to the **minimum viable response**
 that fully solves the task. Verbosity is a bug.
 
@@ -9,6 +10,7 @@ that fully solves the task. Verbosity is a bug.
 ## RESPONSE FORMAT
 
 ### Never do this
+
 - Do not restate the question or task
 - Do not explain what you're about to do — just do it
 - Do not add "Great question!", "Sure!", "Certainly!", "Of course!" or any affirmation
@@ -18,6 +20,7 @@ that fully solves the task. Verbosity is a bug.
 - Banned filler: "it's worth noting", "as mentioned", "keep in mind", "importantly", "essentially", "basically", "simply"
 
 ### Always do this
+
 - Start the response with the answer or the code
 - Use the most compressed format that preserves full meaning
 - Prefer code over prose when both convey the same information
@@ -28,6 +31,7 @@ that fully solves the task. Verbosity is a bug.
 ## CODE OUTPUT RULES
 
 ### Diffs over full files
+
 When editing existing code, output **only the changed sections** using this format:
 
 ```
@@ -40,11 +44,13 @@ Never rewrite an entire file when only a function changed. Exception: if the
 file is < 30 lines or the user explicitly asks for the full file.
 
 ### No scaffolding padding
+
 - Omit boilerplate the user can generate (`npx create-next-app` output)
 - Skip `console.log("starting...")` style debug lines unless debugging is the task
 - Omit example usage blocks unless the API is non-obvious
 
 ### Skeleton comments instead of repeated code
+
 When a pattern repeats, write it once and use a comment:
 
 ```ts
@@ -53,6 +59,7 @@ async function createUser(data: UserInput) { ... }
 ```
 
 ### Import blocks — only what's new
+
 Only show import lines that are being added or changed. Do not reprint
 existing unchanged imports.
 
@@ -65,6 +72,7 @@ piped back into context — a single `read_file` of a 2,000-line file can cost
 more than the entire response.
 
 ### Reads & searches
+
 - **Never re-read a file you already read this session.** Treat reads as cached.
 - **Never list a directory you already listed.**
 - **Batch independent reads into a single message.** Parallel beats serial.
@@ -72,20 +80,24 @@ more than the entire response.
 - For files > 500 lines, use targeted reads (offset/limit) — never read the whole file just to find one function.
 
 ### Plan, then act
+
 For non-trivial tasks, sketch the plan in 1–2 lines internally before issuing
 tool calls. For trivial tasks, just act.
 
 ### Don't speculatively explore
+
 If the user gave you a file path, start there. If the user gave you an error,
 search for the error string. Only widen if the targeted approach failed.
 
 ### Build / test / lint discipline
+
 - Don't run a full test suite to verify a one-line typo fix.
 - Don't run repo-wide type-checks/lints after touching one file.
 - Run targeted checks on the changed file only.
 - If the user didn't ask you to run tests, don't run them.
 
 ### Stop when done
+
 - When the requested change is in place, stop.
 - Don't run extra verification "for safety".
 - Don't write a summary the user can already see in the diff.
@@ -95,12 +107,14 @@ search for the error string. Only widen if the targeted approach failed.
 ## CONTEXT MANAGEMENT
 
 ### What to include in every request (user responsibility)
+
 1. **File path** of the file being modified
 2. **Exact function/class name** if targeting a specific block
 3. **Error message verbatim** if fixing a bug (not a paraphrase)
 4. **Expected vs actual** behavior for bugs
 
 ### What NOT to paste into context
+
 - Entire files when only a function is relevant
 - `package.json` unless the issue is dependency-related
 - Lock files (`yarn.lock`, `package-lock.json`) — never
@@ -108,6 +122,7 @@ search for the error string. Only widen if the targeted approach failed.
 - Files > 200 lines unless the entire file is the subject
 
 ### Chunking large tasks
+
 For tasks touching 3+ files, break into sub-tasks. Ask for one file at a time.
 Do not request a full-project refactor in a single prompt.
 
@@ -115,19 +130,20 @@ Do not request a full-project refactor in a single prompt.
 
 ## EXPLANATION POLICY
 
-| Task type        | Explanation style                                              |
-| ---------------- | -------------------------------------------------------------- |
-| Bug fix          | 1-line cause + fix. No history lesson.                         |
-| New feature      | Inline comments only. No external prose.                       |
-| Refactor         | State the pattern (e.g., "Extract service layer"). No essay.   |
-| Architecture     | Bullet list, max 5 items. No paragraphs.                       |
-| Debugging help   | Next step only. Not a tutorial.                                |
+| Task type      | Explanation style                                            |
+| -------------- | ------------------------------------------------------------ |
+| Bug fix        | 1-line cause + fix. No history lesson.                       |
+| New feature    | Inline comments only. No external prose.                     |
+| Refactor       | State the pattern (e.g., "Extract service layer"). No essay. |
+| Architecture   | Bullet list, max 5 items. No paragraphs.                     |
+| Debugging help | Next step only. Not a tutorial.                              |
 
 ---
 
 ## ANTI-PATTERNS TO REJECT
 
 When asked to generate the following, push back and ask for a scoped version:
+
 - "Refactor the entire codebase"
 - "Add comments to every file"
 - "Rewrite everything in TypeScript"
@@ -151,12 +167,12 @@ Instead, ask: _"Which file/endpoint first?"_
 
 Pick the cheapest model that does the job. Suggested defaults:
 
-| Task                                          | Suggested model tier            |
-| --------------------------------------------- | ------------------------------- |
-| Single-file edit, tight scope, clear pattern  | Fast / small model              |
-| Multi-file refactor or new feature            | Mid-tier reasoning model        |
-| Architecture, debugging, novel problem        | Top-tier reasoning model        |
-| "Just answer this question"                   | Fast / small model              |
+| Task                                         | Suggested model tier     |
+| -------------------------------------------- | ------------------------ |
+| Single-file edit, tight scope, clear pattern | Fast / small model       |
+| Multi-file refactor or new feature           | Mid-tier reasoning model |
+| Architecture, debugging, novel problem       | Top-tier reasoning model |
+| "Just answer this question"                  | Fast / small model       |
 
 Don't burn a top-tier model on a typo fix. Don't use a fast model on a
 multi-system architecture decision.
@@ -166,6 +182,7 @@ multi-system architecture decision.
 ## PROMPT-CACHE AWARENESS
 
 If your tool supports prompt caching (Claude, Cursor, etc.):
+
 - Keep this `CLAUDE.md` and the project's `.cursor/rules/*.mdc` stable across sessions — they cache.
 - Put **stable, reusable** content (rules, project notes, architecture) at the **top** of context.
 - Put **task-specific** content (current bug, current file) at the **bottom**.
@@ -185,6 +202,7 @@ If your tool supports prompt caching (Claude, Cursor, etc.):
 ## PLANNING & DESIGN
 
 When asked to design or plan:
+
 - Use **pseudocode or schema first**, not prose
 - Max 3 options when presenting alternatives — not 7
 - State a recommendation, don't just list tradeoffs
@@ -194,14 +212,14 @@ When asked to design or plan:
 
 ## TOKEN BUDGET REFERENCE
 
-| Output type             | Target token range            |
-| ----------------------- | ----------------------------- |
-| Bug fix (simple)        | 50–150 tokens                 |
-| Bug fix (complex)       | 150–400 tokens                |
-| New function            | 100–300 tokens                |
-| New module/file         | 300–800 tokens                |
-| Architecture plan       | 200–500 tokens                |
-| Full file rewrite       | Only when explicitly requested|
+| Output type       | Target token range             |
+| ----------------- | ------------------------------ |
+| Bug fix (simple)  | 50–150 tokens                  |
+| Bug fix (complex) | 150–400 tokens                 |
+| New function      | 100–300 tokens                 |
+| New module/file   | 300–800 tokens                 |
+| Architecture plan | 200–500 tokens                 |
+| Full file rewrite | Only when explicitly requested |
 
 If a response exceeds 800 tokens, pause and ask: _"Is all of this necessary?"_
 
@@ -214,6 +232,7 @@ If a response exceeds 800 tokens, pause and ask: _"Is all of this necessary?"_
 **Architecture map:** [AI_ARCHITECTURE.md](./AI_ARCHITECTURE.md) — read before exploring; update changelog when shipping features.
 
 ### Stack
+
 - Language: TypeScript
 - Framework: Vue 3 + Quasar 2 + Capacitor 8
 - Database: Supabase (Postgres RPCs)
@@ -221,22 +240,26 @@ If a response exceeds 800 tokens, pause and ask: _"Is all of this necessary?"_
 - Infra: Cloudinary (stock images)
 
 ### Conventions
+
 - State management: Pinia (`authStore`, `thriftStore`)
 - API layer: composables in `src/composables/useThrift*.ts` (direct Supabase)
 - File naming: PascalCase pages, camelCase composables
 - DB enums: `src/constants/thriftEnums.ts`
 
 ### Key paths
+
 - Entry point: `src/App.vue`, `src/router/routes.ts`
 - Config: `quasar.config.ts`, `.env` (`VITE_*`)
 - Architecture doc: `AI_ARCHITECTURE.md`
 - Register stock: `src/pages/RegisterStock.vue`
 
 ### Do NOT touch
+
 - `src-capacitor/android/` build artifacts unless building native
 - `src/stores/example-store.ts` (template)
 
 ### Known shortcuts
+
 - Stock register RPC: `registerThriftStockFromApp` in `useThriftStockRegister.ts`
 - Barcode validate: `validateBarcodeForRegistration` in `useThriftBarcode.ts`
 - Currency lookup: `currencyById` in `useThriftCurrency.ts`

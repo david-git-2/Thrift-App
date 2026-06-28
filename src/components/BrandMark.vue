@@ -8,13 +8,7 @@
     :class="props.class"
     aria-hidden="true"
   >
-    <rect
-      width="28"
-      height="28"
-      rx="7"
-      :fill="fill"
-      fill-opacity="0.18"
-    />
+    <rect width="28" height="28" rx="7" :fill="fill" fill-opacity="0.18" />
     <path d="M7 9.5C7 8.12 8.12 7 9.5 7H14V14H7V9.5Z" :fill="fill" />
     <path
       d="M14 7H18.5C19.88 7 21 8.12 21 9.5V14H14V7Z"
@@ -35,23 +29,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    size?: number | string
+    size?: number | string;
     /** App-scope favicon colour from TradeFlowBD web (`#10b981`). */
-    color?: string
+    color?: string;
     /** Use `currentColor` so parent text colour controls the mark. */
-    useCurrentColor?: boolean
-    class?: string
+    useCurrentColor?: boolean;
+    class?: string;
   }>(),
   {
     size: 28,
-    color: '#10b981',
-    useCurrentColor: false,
-  },
-)
+    color: "#10b981",
+    useCurrentColor: false
+  }
+);
 
-const fill = computed(() => (props.useCurrentColor ? 'currentColor' : props.color))
+const fill = computed(() =>
+  props.useCurrentColor ? "currentColor" : props.color
+);
 </script>

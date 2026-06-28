@@ -1,10 +1,10 @@
-import type { ThriftCurrency } from '../composables/useThriftCurrency'
+import type { ThriftCurrency } from "../composables/useThriftCurrency";
 
 export function formatThriftAmount(
   amount: number | null | undefined,
-  currency?: ThriftCurrency | null,
+  currency?: ThriftCurrency | null
 ): string {
-  if (amount == null || Number.isNaN(Number(amount))) return '—'
-  const symbol = currency?.symbol ?? ''
-  return `${symbol}${Number(amount).toFixed(2)}`
+  if (amount == null || Number.isNaN(Number(amount))) return "—";
+  const symbol = currency?.symbol ?? "";
+  return `${symbol}${Number(amount).toFixed(2)}`;
 }

@@ -3,11 +3,14 @@
     class="page-initial-loader"
     :class="{
       'page-initial-loader--compact': compact,
-      'page-initial-loader--overlay': overlay,
+      'page-initial-loader--overlay': overlay
     }"
   >
     <q-spinner-tail color="primary" :size="compact ? '48px' : '72px'" />
-    <div v-if="message" class="page-initial-loader__message text-caption text-grey-7 q-mt-md">
+    <div
+      v-if="message"
+      class="page-initial-loader__message text-caption text-grey-7 q-mt-md"
+    >
       {{ message }}
     </div>
   </div>
@@ -16,16 +19,16 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    message?: string
-    compact?: boolean
-    overlay?: boolean
+    message?: string;
+    compact?: boolean;
+    overlay?: boolean;
   }>(),
   {
-    message: '',
+    message: "",
     compact: false,
-    overlay: false,
-  },
-)
+    overlay: false
+  }
+);
 </script>
 
 <style scoped>
