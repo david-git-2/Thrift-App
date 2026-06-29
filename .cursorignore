@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+src-capacitor/node_modules/
+
+# Quasar / Vite build output
+.quasar/
+dist/
+**/.cache/
+**/*.tsbuildinfo
+**/.eslintcache
+**/.oxlintcache
+quasar.config.*.temporary.compiled*
+
+# Capacitor / Android artifacts
+src-capacitor/android/.gradle/
+src-capacitor/android/**/build/
+src-capacitor/android/app/src/main/assets/public/
+src-capacitor/www/
+
+# Cordova (legacy)
+src-cordova/platforms/
+src-cordova/plugins/
+src-cordova/www/
+
+# Test output
+coverage/
+.nyc_output/
+
+# Logs
+**/*.log
+
+# OS
+.DS_Store

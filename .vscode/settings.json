@@ -8,9 +8,19 @@
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
   "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.quasar/**": true,
+    "**/dist/**": true,
+    "**/src-capacitor/android/.gradle/**": true,
+    "**/src-capacitor/android/**/build/**": true
+  },
   "search.exclude": {
+    "**/node_modules": true,
     "dist/": true,
     ".quasar/": true,
-    "/quasar.config.js.temporary.*": true
+    "/quasar.config.js.temporary.*": true,
+    "**/src-capacitor/android/.gradle": true,
+    "**/src-capacitor/android/**/build": true
   }
 }
