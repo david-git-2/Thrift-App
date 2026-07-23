@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useTenantStore, clearTenantWorkspaceStorage } from "./tenantStore";
-import { useThriftCurrencyStore } from "./thriftCurrencyStore";
 
 export interface AuthUserSnapshot {
   id: string;
@@ -153,7 +152,6 @@ export const useAuthStore = defineStore("auth", () => {
     snapshot.value = null;
     writeStorage(null);
     clearTenantWorkspaceStorage();
-    useThriftCurrencyStore().resetCurrencies();
   };
 
   return {

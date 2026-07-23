@@ -40,8 +40,8 @@
 
               <!-- Header -->
               <div class="auth-card__header">
-                <h2 class="auth-card__title">Thrift App Login</h2>
-                <p class="auth-card__subtitle">Sign in to continue</p>
+                <h2 class="auth-card__title">{{ $t("auth.loginTitle") }}</h2>
+                <p class="auth-card__subtitle">{{ $t("auth.subtitle") }}</p>
               </div>
 
               <!-- Error banner -->
@@ -56,7 +56,7 @@
 
               <!-- Divider -->
               <div class="auth-card__divider" aria-hidden="true">
-                <span>Continue with</span>
+                <span>{{ $t("common.confirm") }}</span>
               </div>
 
               <!-- Google CTA button -->
@@ -121,7 +121,7 @@
                   </svg>
 
                   <span class="auth-card__cta-label">
-                    {{ isLoading ? "Connecting…" : "Continue with Google" }}
+                    {{ isLoading ? $t("common.loading") : $t("auth.loginButton") }}
                   </span>
                 </span>
               </button>
@@ -132,7 +132,7 @@
                   size="0.85rem"
                   style="vertical-align: -2px"
                 />
-                Secured with Google sign-in
+                {{ $t("auth.subtitle") }}
               </p>
             </section>
           </div>

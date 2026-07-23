@@ -54,13 +54,13 @@ onMounted(async () => {
 
     // Poll for the session to be established by Supabase's automatic PKCE/hash exchange
     let session = null;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 60; i++) {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         session = data.session;
         break;
       }
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     if (session) {

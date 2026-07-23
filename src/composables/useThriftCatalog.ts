@@ -11,6 +11,12 @@ export interface ThriftShelfOption {
   shelf_code: string;
 }
 
+export interface ThriftBoxOption {
+  id: number;
+  box_code: string;
+  shelf_id: number | null;
+}
+
 export async function fetchThriftCategories(
   tenantId: number
 ): Promise<ThriftCatalogOption[]> {
@@ -48,6 +54,25 @@ export async function fetchThriftShelves(
 
   if (error) throw error;
   return (data || []) as ThriftShelfOption[];
+}
+
+export async function fetchThriftBoxes(
+  tenantId: number,
+  shelfId?: number | null
+): Promise<ThriftBoxOption[]> {
+  let query = supabase
+    .from("thrift_boxes")
+    .select("id, box_code, shelf_id")
+    .eq("tenant_id", tenantId)
+    .order("box_code");
+
+  if (shelfId != null) {
+    query = query.eq("shelf_id", shelfId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as ThriftBoxOption[];
 }
 
 export async function fetchThriftDefaultOriginUnitPrice(

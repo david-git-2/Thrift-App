@@ -1,151 +1,125 @@
-# Thrift App (thrift-app)
+# Thrift App (`thrift-app`)
 
-A Quasar + Capacitor mobile application for stock registration, barcode scanning, and lookup management.
+A modern, high-performance mobile and web application built with **Quasar (Vue 3)**, **Capacitor 8**, **Pinia**, **TanStack Vue Query**, and **Supabase**. Designed for warehouse inventory management, stock registration, fast barcode scanning, stock audit, and internationalization.
 
-For architecture, data flows, and where to add features (AI + humans), see **[AI_ARCHITECTURE.md](./AI_ARCHITECTURE.md)**.
+---
 
-## Install the dependencies
+## 🌟 Key Features
+
+- **Inventory & Stock Management**: Streamlined workflow to register, view, update, filter, and audit stocks.
+- **High-Performance Barcode Scanning**: Hardware and ML Kit camera scanning integration for lightning-fast barcode capture.
+- **Multilingual Support (i18n)**: Instant language switching between **English** and **Bengali (বাংলা)** with persisted locale preferences.
+- **Contextual Help & Tooltips**: Built-in visual help dialogs (`AppHelpDialog`) across main workflows to guide warehouse operators.
+- **Modern UI & Design System**: Custom typography (Outfit / Plus Jakarta Sans / JetBrains Mono), Phosphor icons, sleek glassmorphism panels, and skeleton loaders.
+- **Android Native Mobile App**: Powered by Capacitor 8 with optimized release builds and deep link OAuth routing.
+
+---
+
+## 🚀 Tech Stack
+
+- **Framework**: [Quasar Framework v2](https://quasar.dev/) (Vue 3 + Vite)
+- **Mobile Engine**: [Capacitor 8](https://capacitorjs.com/)
+- **State & Query**: [Pinia](https://pinia.vuejs.org/) & [TanStack Vue Query v5](https://tanstack.com/query/latest)
+- **Backend & Auth**: [Supabase](https://supabase.com/)
+- **Internationalization**: [Vue I18n v10](https://vue-i18n.intlify.dev/)
+- **Iconography**: Phosphor Icons (`@phosphor-icons/web`)
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Install Dependencies
 
 ```bash
-npm install
-# or: pnpm/yarn/bun install
+pnpm install
+# or npm install / yarn / bun
 ```
 
-### Start the app in web development mode (HMR, error reporting, etc.)
+### 2. Configure Environment Variables
+
+Create a `.env` file in the project root:
+
+```ini
+VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_GOOGLE_DRIVE_UPLOAD_ENABLED=false
+```
+
+### 3. Start Development Server
 
 ```bash
 npm run dev
 # or: npx quasar dev
 ```
 
-### Build the app for production (Web)
-
-```bash
-npm run build
-# or: npx quasar build
-```
-
 ---
 
-## Google Drive backup (web only)
+## 📱 Native Android Development (Capacitor)
 
-The mobile app saves images to **Cloudinary only**. Drive backup is done from the **web admin** UI.
-
-**Full guide:** [TRADEFLOWBD_DRIVE_UPLOADER.md](../brandwala-wholesale-quasar-v2/doc/TRADEFLOWBD_DRIVE_UPLOADER.md) in the main repo.
-
-1. Keep `VITE_GOOGLE_DRIVE_UPLOAD_ENABLED=false` in this app (default).
-2. On the web app, sign in with **Google** as the Drive admin email.
-3. Use **Thrift → Shipments** → cloud upload icon per shipment.
-
-No Supabase Drive secrets or OAuth Playground setup is required for thrift backup.
-
----
-
-## Google OAuth & Deep Linking in Native App
-
-Because Google OAuth authentication happens in the browser, deep links are used to return the user to the native mobile app after authentication.
-
-### Supabase Configuration
-
-To enable authentication redirects to the app, you **MUST** whitelist the custom deep link redirect URL in the Supabase Dashboard:
-
-1. Go to your **Supabase Dashboard** > **Authentication** > **URL Configuration**.
-2. Add the following URL to your **Redirect URLs**:
-   ```
-   com.brandwala.thriftapp://auth-callback
-   ```
-3. Save the changes.
-
----
-
-## Capacitor (Android Mobile App) Instructions
-
-This application is wrapped with Capacitor to run natively on mobile devices.
-
-### 1. How to Open the Project in Android Studio
-
-**Quick open (recommended):**
+### 1. Open Android Studio
 
 ```bash
 cd src-capacitor
 npx cap open android
 ```
 
-Run from the project root. This opens `src-capacitor/android` in Android Studio.
+### 2. Development Mode (Live Reload on Device / Emulator)
 
-Other options:
+```bash
+npx quasar dev -m capacitor -T android
+```
 
-- **Dev mode (build + run on device/emulator):**
+### 3. Building Android Binaries (APK / AAB)
 
-  ```bash
-  npx quasar dev -m capacitor -T android
-  ```
-
-- **Manually via Android Studio UI:**
-  1. Launch **Android Studio**.
-  2. Click **Open** (or **Open an Existing Project**).
-  3. Select the `src-capacitor/android` folder in this project.
-
----
-
-### 2. How to Sync Plugins and Assets
-
-Whenever you make frontend changes in the `src/` directory or install new Capacitor plugins, you need to sync them with the native Android project:
-
-- **Via Quasar (Build + Sync):**
-
-  ```bash
-  npx quasar build -m capacitor -T android
-  ```
-
-  This compiles the web app assets and automatically executes `cap sync` under the hood.
-
-- **Manual Capacitor Sync:**
-  If you only installed a new plugin or changed configuration files without needing a full rebuild, run:
-  ```bash
-  npm run sync
-  ```
-
----
-
-### 3. How to Build the App (APK / AAB)
-
-**Use a clean release build for sideloading** — it installs faster and avoids stale web assets piling up in the APK.
+Clean release build (recommended for sideloading):
 
 ```bash
 npm run build:android
 ```
 
-This clears old Capacitor web assets, rebuilds the UI, and produces a **release** APK (smaller than debug, arm-only native libs).
-
-For a debug APK while developing:
+Debug build:
 
 ```bash
 npm run build:android:debug
 ```
 
-**Why installs felt slow:** debug APKs are larger, ML Kit ships native scanner libraries, and repeated builds were leaving **old JS/CSS bundles** inside the APK (~5MB extra). `npm run clean:android` fixes the stale assets issue.
+Sync web assets with Capacitor native platform:
 
-Legacy step-by-step:
+```bash
+npm run sync
+```
 
-1.  **Compile the Web Assets:**
+---
 
-    ```bash
-    npx quasar build -m capacitor -T android
-    ```
+## 🔐 Google OAuth & Deep Linking
 
-2.  **Build the Native Binary:**
-    You can trigger the native compiler from the command line:
+To enable native Google OAuth login redirection back to the mobile application:
 
-    ```bash
-    cd src-capacitor
-    npx cap build android
-    ```
+1. Open your **Supabase Dashboard** > **Authentication** > **URL Configuration**.
+2. Add the custom scheme URI to your **Redirect URLs**:
+   ```
+   com.brandwala.thriftapp://auth-callback
+   ```
+3. Save changes.
 
-    _This command will ask whether to build a Debug APK or a Release AAB/APK._
+---
 
-3.  **Alternative Build via Android Studio:**
-    1. Open the project in Android Studio (`cd src-capacitor && npx cap open android`).
-    2. Wait for Gradle sync to complete.
-    3. In the top menu, go to **Build** > **Build Bundle(s) / APK(s)** > **Build APK(s)** (or **Generate Signed Bundle / APK** for release builds).
-    4. Once done, a popup will locate the compiled `.apk` file on your system.
+## ☁️ Google Drive Backup (Web Admin Only)
+
+The mobile app uploads images directly to Cloudinary. Google Drive backup is triggered from the **Web Admin UI**:
+
+1. Keep `VITE_GOOGLE_DRIVE_UPLOAD_ENABLED=false` in the mobile app.
+2. Sign in with the Google Drive admin account on the Web Admin platform.
+3. Access **Thrift → Shipments** and use the cloud upload trigger per shipment.
+
+---
+
+## 🧪 Linting & Type Checking
+
+```bash
+# Typecheck TypeScript / Vue files
+npm run typecheck
+
+# Code formatting & linting
+npm run lint
+```

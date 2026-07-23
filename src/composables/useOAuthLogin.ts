@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { supabase } from "../boot/supabase";
 import { useAuthStore } from "../stores/authStore";
 import { useTenantStore } from "../stores/tenantStore";
@@ -14,7 +14,6 @@ const normalizeTenantSlug = (value: string | null | undefined) =>
   value?.trim().toLowerCase() || null;
 
 export function useOAuthLogin() {
-  const route = useRoute();
   const router = useRouter();
   const authStore = useAuthStore();
   const tenantStore = useTenantStore();

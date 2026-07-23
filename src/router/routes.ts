@@ -8,7 +8,8 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: "",
-        redirect: "/insert-stock"
+        name: "dashboard",
+        component: () => import("../pages/DashboardPage.vue")
       },
       {
         path: "insert-stock",
@@ -31,6 +32,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: "scan-barcode",
         component: () => import("../pages/ScanBarcode.vue")
+      },
+      {
+        path: "audit-mode",
+        name: "audit-mode",
+        component: () => import("../pages/AuditModePage.vue")
       }
     ]
   },

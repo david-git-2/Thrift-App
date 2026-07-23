@@ -32,7 +32,20 @@ const trackedFetch: typeof fetch = async (input, init) => {
     modifiedInit.headers = headers;
   }
 
-  return await defaultFetch(input, modifiedInit);
+  const response = await defaultFetch(input, modifiedInit);
+
+  if (response.status === 401) {
+    if (typeof window !== "undefined") {
+      void supabase.auth.signOut().catch(() => {});
+      window.localStorage.removeItem("brandwala.auth.access.v2");
+      window.localStorage.removeItem("brandwala.tenant.workspace.v1");
+      if (window.location.hash !== "#/login" && window.location.pathname !== "/login") {
+        window.location.href = "#/login";
+      }
+    }
+  }
+
+  return response;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

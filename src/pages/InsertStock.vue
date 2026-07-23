@@ -1,27 +1,31 @@
 <template>
-  <q-page class="bw-page theme-app">
+  <q-page class="bw-page theme-app bg-grey-1">
     <div class="bw-page__stack">
-      <AppPageHeader title="Insert Stock" />
+      <AppPageHeader
+        :title="$t('insertStock.title')"
+        show-help
+        @help="showInsertHelp = true"
+      />
 
       <!-- State 1: No shipment selected -->
       <q-card v-if="!selectedShipment" class="app-card">
         <q-card-section class="text-center q-py-xl">
           <div class="insert-stock__icon-wrap q-mb-md">
-            <q-icon name="inventory_2" size="2.5rem" color="primary" />
+            <q-icon name="ph-regular ph-package" size="2.5rem" color="primary" />
           </div>
           <div class="text-h6 text-weight-bold text-grey-9 q-mb-xs"
-            >No shipment selected</div
+            >{{ $t("insertStock.title") }}</div
           >
           <p class="text-body2 text-grey-7 q-mb-lg insert-stock__hint">
-            Choose a shipment and box to start.
+            {{ $t("insertStock.barcodePlaceholder") }}
           </p>
           <q-btn
             color="primary"
             unelevated
             class="q-px-xl app-cta-btn"
             size="md"
-            icon="add"
-            label="Add Item"
+            icon="ph-regular ph-plus"
+            :label="$t('nav.insert')"
             no-caps
             @click="openSelector"
           />
@@ -33,18 +37,18 @@
         <q-card-section>
           <div class="row items-center justify-between q-mb-md">
             <div class="app-section-title q-mb-none">
-              <q-icon name="workspaces" />
-              Active workspace
+              <q-icon name="ph-regular ph-squares-four" />
+              {{ $t("stockDetail.location") }}
             </div>
             <q-chip
-              icon="check_circle"
+              icon="ph-regular ph-check-circle"
               color="positive"
               text-color="white"
               size="sm"
               dense
               class="q-px-sm"
             >
-              Ready
+              {{ $t("common.success") }}
             </q-chip>
           </div>
 
@@ -76,7 +80,7 @@
             color="primary"
             unelevated
             class="full-width app-cta-btn"
-            icon="add"
+            icon="ph-regular ph-plus"
             label="Add Item"
             no-caps
             size="md"
@@ -86,7 +90,7 @@
             flat
             color="grey-7"
             class="full-width text-weight-medium"
-            icon="swap_horiz"
+            icon="ph-regular ph-arrows-left-right"
             label="Change shipment / box"
             no-caps
             @click="openSelector"
@@ -99,7 +103,7 @@
         <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-md">
             <div class="text-h6 text-weight-bold">Select shipment & box</div>
-            <q-btn flat round dense icon="close" v-close-popup />
+            <q-btn flat round dense icon="ph-regular ph-x" v-close-popup />
           </q-card-section>
 
           <q-card-section class="q-pt-none q-gutter-md text-left">
@@ -142,7 +146,7 @@
                 dense
                 no-caps
                 color="primary"
-                icon="add_box"
+                icon="ph-regular ph-plus-square"
                 label="Add new box"
                 class="q-mt-xs"
                 :disable="!tempShipment"
@@ -157,7 +161,7 @@
               label="Add Item"
               color="primary"
               no-caps
-              icon="add"
+              icon="ph-regular ph-plus"
               :disable="!tempShipment"
               @click="onConfirm"
             />
@@ -170,7 +174,7 @@
         <q-card class="app-dialog-card dialog-card">
           <q-card-section class="row items-center justify-between q-pb-sm">
             <div class="text-h6 text-weight-bold">New box</div>
-            <q-btn flat round dense icon="close" v-close-popup />
+            <q-btn flat round dense icon="ph-regular ph-x" v-close-popup />
           </q-card-section>
 
           <q-card-section class="q-pt-none q-gutter-md text-left">
@@ -230,12 +234,22 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
+
+      <!-- Stock Registration Setup Help Dialog -->
+      <AppHelpDialog
+        v-model="showInsertHelp"
+        :title="$t('help.insertStock.title')"
+        :subtitle="$t('help.insertStock.subtitle')"
+        icon="ph-regular ph-package"
+        :steps="insertHelpSteps"
+      />
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useThriftStore } from "../stores/thriftStore";
@@ -243,11 +257,31 @@ import { useAuthStore } from "../stores/authStore";
 import { supabase } from "../boot/supabase";
 import { refreshShipmentCurrencyIds } from "../composables/useThriftShipment";
 import AppPageHeader from "../components/AppPageHeader.vue";
+import AppHelpDialog from "../components/AppHelpDialog.vue";
 
 const router = useRouter();
 const $q = useQuasar();
+const { tm } = useI18n();
 const thriftStore = useThriftStore();
 const authStore = useAuthStore();
+
+const showInsertHelp = ref(false);
+
+const insertHelpSteps = computed(() => [
+  {
+    title: tm("help.insertStock.steps.step1Title") as string,
+    description: tm("help.insertStock.steps.step1Desc") as string,
+    tip: tm("help.insertStock.steps.step1Tip") as string,
+  },
+  {
+    title: tm("help.insertStock.steps.step2Title") as string,
+    description: tm("help.insertStock.steps.step2Desc") as string,
+  },
+  {
+    title: tm("help.insertStock.steps.step3Title") as string,
+    description: tm("help.insertStock.steps.step3Desc") as string,
+  },
+]);
 
 const dialogOpen = ref(false);
 const createBoxDialogOpen = ref(false);

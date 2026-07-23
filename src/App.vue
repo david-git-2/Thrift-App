@@ -10,7 +10,11 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { supabase } from "./boot/supabase";
 
+import { useAuthStore } from "./stores/authStore";
+
 const router = useRouter();
+const authStore = useAuthStore();
+const THRIFT_TENANT_SLUG = "thrift";
 
 /**
  * Handle incoming deep link URLs from OAuth redirect.
@@ -101,6 +105,17 @@ async function handleDeepLink(urlStr: string) {
 
 onMounted(async () => {
   if (!Capacitor.isNativePlatform()) return;
+
+  // ── Listen for Chrome Custom Tab closure ─────────────────────────────
+  Browser.addListener("browserFinished", async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session && !authStore.isAuthenticated) {
+      await router.replace({
+        path: "/auth/callback",
+        query: { scope: "app", tenant_slug: THRIFT_TENANT_SLUG }
+      });
+    }
+  });
 
   // ── CRITICAL: Check for the URL that LAUNCHED the app ─────────────────
   // When the app starts fresh from a deep-link intent, `appUrlOpen` fires

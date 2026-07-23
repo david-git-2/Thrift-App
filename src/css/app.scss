@@ -1,20 +1,23 @@
 :root {
-  --bw-brand-base: #f4f7f5;
+  --bw-brand-base: #f8fafc;
   --bw-brand-surface: #ffffff;
-  --bw-brand-border: #e2e8e4;
-  --bw-brand-ink: #14201a;
-  --bw-brand-muted: #64746b;
-  --bw-brand-accent: #047857;
-  --bw-brand-accent-rgb: 4 120 87;
+  --bw-brand-border: #cbd5e1;
+  --bw-brand-ink: #022c22;
+  --bw-brand-muted: #64748b;
+  --bw-brand-primary: #059669;
+  --bw-brand-accent: #0d9488;
+  --bw-brand-dark: #022c22;
+  --bw-brand-primary-rgb: 5 150 105;
+  --bw-brand-accent-rgb: 13 148 136;
   --app-radius-sm: 10px;
   --app-radius-md: 16px;
   --app-radius-lg: 22px;
   --app-radius-pill: 999px;
   --app-shadow-sm:
-    0 1px 2px rgb(20 32 26 / 0.05), 0 4px 12px rgb(20 32 26 / 0.04);
+    0 4px 20px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.04);
   --app-shadow-md:
-    0 8px 24px rgb(20 32 26 / 0.08), 0 2px 6px rgb(20 32 26 / 0.04);
-  --app-shadow-lg: 0 16px 40px rgb(20 32 26 / 0.1);
+    0 8px 24px rgba(2, 44, 34, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --app-shadow-lg: 0 16px 40px rgba(2, 44, 34, 0.12);
 }
 
 .theme-platform,
@@ -53,9 +56,9 @@
 }
 
 .theme-app {
-  --bw-theme-primary: #047857;
-  --bw-theme-primary-rgb: 4 120 87;
-  --bw-theme-primary-soft: rgb(4 120 87 / 0.08);
+  --bw-theme-primary: #059669;
+  --bw-theme-primary-rgb: 5 150 105;
+  --bw-theme-primary-soft: rgba(5, 150, 105, 0.12);
 }
 
 .theme-shop {
@@ -65,20 +68,20 @@
 }
 
 body {
+  font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
   background: var(--bw-theme-base, var(--bw-brand-base));
   color: var(--bw-theme-ink, var(--bw-brand-ink));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'tnum' 1;
+}
+
 .theme-app .q-page-container {
-  background:
-    radial-gradient(
-      ellipse 120% 80% at 50% -20%,
-      rgb(var(--bw-theme-primary-rgb) / 0.09),
-      transparent 55%
-    ),
-    linear-gradient(180deg, #eef3f0 0%, #f7faf8 42%, #f4f7f5 100%);
+  background: #f5f5f5;
 }
 
 .q-page {
@@ -122,18 +125,23 @@ body {
 /* ── App shell ───────────────────────────────────────── */
 
 .app-header {
-  background: linear-gradient(
-    135deg,
-    #065f46 0%,
-    var(--bw-theme-primary) 48%,
-    #10b981 140%
-  ) !important;
-  box-shadow: 0 4px 20px rgb(var(--bw-theme-primary-rgb) / 0.22);
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  color: #022c22 !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.app-header--hidden {
+  transform: translateY(-100%) !important;
 }
 
 .app-header .q-toolbar {
   min-height: 56px;
   padding-inline: 1rem;
+  color: #022c22;
 }
 
 .app-header__brand {
@@ -151,63 +159,73 @@ body {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: rgb(255 255 255 / 0.14);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  color: #fff;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+  color: #ffffff;
 }
 
 .app-header__title {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: #022c22;
 }
 
 .app-header__tenant {
   font-size: 0.72rem;
-  opacity: 0.88;
+  color: #64748b;
   font-weight: 500;
 }
 
 .app-header__user {
-  background: rgb(255 255 255 / 0.14);
-  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.18);
   border-radius: var(--app-radius-pill);
   padding: 2px 10px 2px 4px;
 }
 
 .app-tabbar {
-  background: rgb(255 255 255 / 0.92) !important;
-  backdrop-filter: blur(14px);
-  border-top: 1px solid rgb(var(--bw-theme-primary-rgb) / 0.08) !important;
-  box-shadow: 0 -8px 24px rgb(20 32 26 / 0.06);
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.app-tabbar--hidden {
+  transform: translateY(100%) !important;
 }
 
 .app-tabbar .q-tabs {
-  min-height: 62px;
+  min-height: 50px;
 }
 
 .app-tabbar .q-tab {
-  min-height: 56px;
-  border-radius: 14px;
-  margin: 4px 2px;
+  min-height: 48px;
+  padding: 2px 4px;
+  border-radius: 12px;
+  margin: 2px 1px;
   transition:
     background 0.2s ease,
     color 0.2s ease;
 }
 
 .app-tabbar .q-tab--active {
-  background: var(--bw-theme-primary-soft);
+  background: rgba(5, 150, 105, 0.12);
+  border-radius: 999px;
 }
 
 .app-tabbar .q-tab__icon {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
 }
 
 .app-tabbar .q-tab__label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 /* ── Page chrome ───────────────────────────────────── */
@@ -265,10 +283,10 @@ body {
 .app-card,
 .theme-app .q-card:not(.q-dialog__inner > .q-card) {
   border-radius: var(--app-radius-md) !important;
-  border: 1px solid rgb(var(--bw-theme-primary-rgb) / 0.07);
-  background: rgb(255 255 255 / 0.94);
-  box-shadow: var(--app-shadow-sm);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(16px);
 }
 
 .app-card--elevated {
@@ -341,7 +359,12 @@ body {
   font-size: 1rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.01em;
-  box-shadow: 0 10px 24px rgb(var(--bw-theme-primary-rgb) / 0.28);
+  box-shadow: 0 10px 24px rgba(5, 150, 105, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 .app-cta-btn--scan {
@@ -511,8 +534,10 @@ body {
 }
 
 body.barcode-scanner-active {
-  visibility: hidden;
-  background: transparent;
+  background: transparent !important;
+  #q-app, .q-layout, .q-page-container {
+    background: transparent !important;
+  }
 }
 
 body.barcode-scanner-active .barcode-scan-overlay {
@@ -521,4 +546,41 @@ body.barcode-scanner-active .barcode-scan-overlay {
 
 .barcode-scan-overlay__panel {
   background: linear-gradient(transparent, rgb(20 32 26 / 0.72)) !important;
+}
+
+/* ── High-Contrast Status Chips ─────────────────────── */
+.bg-emerald-50 {
+  background-color: #ecfdf5 !important;
+}
+.text-emerald-700 {
+  color: #047857 !important;
+}
+
+.bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+.text-slate-700 {
+  color: #334155 !important;
+}
+
+.bg-amber-50 {
+  background-color: #fffbeb !important;
+}
+.text-amber-700 {
+  color: #b45309 !important;
+}
+
+.bg-rose-50 {
+  background-color: #fff1f2 !important;
+}
+.text-rose-700 {
+  color: #be123c !important;
+}
+
+.stock-status-chip {
+  font-weight: 700 !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.03em !important;
+  border-radius: var(--app-radius-pill) !important;
+  padding: 4px 10px !important;
 }

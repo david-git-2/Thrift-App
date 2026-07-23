@@ -7,6 +7,25 @@ export interface ThriftStockListMeta {
   total_pages: number;
 }
 
+export interface ThriftStockMeasurements {
+  bust_in?: number | null;
+  length_in?: number | null;
+  waist_in?: number | null;
+  hips_in?: number | null;
+  shoulder_width_in?: number | null;
+  sleeve_length_in?: number | null;
+  hem_width_in?: number | null;
+  neck_opening_in?: number | null;
+  arm_circumference_in?: number | null;
+  lining?: boolean | null;
+  dress_style?: string | null;
+  sleeve_type?: string | null;
+  neckline?: string | null;
+  closure_type?: string | null;
+  fabric_stretch?: string | null;
+  measurement_notes?: string | null;
+}
+
 export interface ThriftStockListItem {
   id: number;
   name: string | null;
@@ -20,6 +39,7 @@ export interface ThriftStockListItem {
   shipment_id: number;
   listed_price: number;
   image_url: string;
+  measurements?: ThriftStockMeasurements | null;
 }
 
 export interface ThriftStockListResult {
@@ -34,6 +54,8 @@ export interface ThriftStockListParams {
   search?: string;
   status?: string | null;
   condition?: string | null;
+  shelfId?: number | null;
+  boxId?: number | null;
 }
 
 interface ThriftStockRow {
@@ -47,6 +69,8 @@ interface ThriftStockRow {
   status: string;
   created_at: string;
   shipment_id: number;
+  shelf_id?: number | null;
+  box_id?: number | null;
   thrift_pricings?: Array<{
     listed_unit_price: number;
   }> | null;
@@ -54,6 +78,7 @@ interface ThriftStockRow {
     image_url: string;
     is_primary: boolean;
   }> | null;
+  thrift_stock_measurements?: ThriftStockMeasurements[] | ThriftStockMeasurements | null;
 }
 
 function shouldFallbackToDirectQuery(error: {
@@ -93,6 +118,9 @@ function mapStockRow(item: ThriftStockRow): ThriftStockListItem {
   const primaryImage =
     item.thrift_stock_images?.find(img => img.is_primary) ||
     item.thrift_stock_images?.[0];
+  const measurementsObj = Array.isArray(item.thrift_stock_measurements)
+    ? item.thrift_stock_measurements[0]
+    : item.thrift_stock_measurements;
 
   return {
     id: item.id,
@@ -106,7 +134,8 @@ function mapStockRow(item: ThriftStockRow): ThriftStockListItem {
     created_at: item.created_at || "",
     shipment_id: item.shipment_id,
     listed_price: Number(pricing?.listed_unit_price) || 0,
-    image_url: primaryImage?.image_url || ""
+    image_url: primaryImage?.image_url || "",
+    measurements: measurementsObj || null
   };
 }
 
@@ -120,6 +149,9 @@ function mapRpcPayload(data: {
     data: rows.map(item => {
       const pricing =
         (item.pricing as Record<string, unknown> | undefined) || {};
+      const rawMeasurements = (item.measurements || item.thrift_stock_measurements) as ThriftStockMeasurements | ThriftStockMeasurements[] | undefined;
+      const measurementsObj = Array.isArray(rawMeasurements) ? rawMeasurements[0] : rawMeasurements;
+
       return {
         id: item.id as number,
         name: (item.name as string | null) ?? null,
@@ -132,7 +164,8 @@ function mapRpcPayload(data: {
         created_at: (item.created_at as string) || "",
         shipment_id: Number(item.shipment_id) || 0,
         listed_price: Number(pricing.listed_unit_price) || 0,
-        image_url: (item.image_url as string) || ""
+        image_url: (item.image_url as string) || "",
+        measurements: measurementsObj || null
       };
     }),
     meta: {
@@ -190,12 +223,32 @@ async function fetchThriftStocksDirect(
         status,
         created_at,
         shipment_id,
+        shelf_id,
+        box_id,
         thrift_pricings (
           listed_unit_price
         ),
         thrift_stock_images (
           image_url,
           is_primary
+        ),
+        thrift_stock_measurements (
+          bust_in,
+          length_in,
+          waist_in,
+          hips_in,
+          shoulder_width_in,
+          sleeve_length_in,
+          hem_width_in,
+          neck_opening_in,
+          arm_circumference_in,
+          lining,
+          dress_style,
+          sleeve_type,
+          neckline,
+          closure_type,
+          fabric_stretch,
+          measurement_notes
         )
       `,
       { count: "exact" }
@@ -209,6 +262,14 @@ async function fetchThriftStocksDirect(
 
   if (params.condition) {
     query = query.eq("condition", params.condition);
+  }
+
+  if (params.shelfId != null) {
+    query = query.eq("shelf_id", params.shelfId);
+  }
+
+  if (params.boxId != null) {
+    query = query.eq("box_id", params.boxId);
   }
 
   if (search) {

@@ -1,19 +1,19 @@
 <template>
-  <q-page class="bw-page theme-app">
+  <q-page class="bw-page theme-app bg-grey-1">
     <div class="bw-page__stack">
       <div class="row items-center q-mb-sm">
-        <q-btn flat round dense icon="arrow_back" @click="goBack" />
-        <div class="text-h6 text-weight-bold q-ml-xs">Edit stock</div>
+        <q-btn flat round dense icon="ph-regular ph-arrow-left" @click="goBack" />
+        <div class="text-h6 text-weight-bold q-ml-xs">{{ $t("stockDetail.title") }}</div>
       </div>
 
-      <PageInitialLoader v-if="loading" />
+      <PageInitialLoader v-if="loading" type="detail" />
 
       <template v-else-if="stock">
         <q-card class="app-card q-mb-sm overflow-hidden">
           <q-card-section class="q-pa-sm">
             <div class="app-section-title q-mb-sm">
-              <q-icon name="photo_camera" />
-              Product image
+              <q-icon name="ph-regular ph-camera" />
+              {{ $t("stockDetail.overview") }}
             </div>
             <div v-if="previewImageUrl" class="relative-position">
               <div class="stock-detail-image rounded-borders overflow-hidden">
@@ -26,27 +26,31 @@
               </div>
               <q-chip
                 dense
-                :color="statusColor(stock.status)"
-                text-color="white"
-                class="absolute-top-left q-ma-sm text-uppercase text-weight-bold"
+                :class="[
+                  'absolute-top-left',
+                  'q-ma-sm',
+                  'text-uppercase',
+                  'stock-status-chip',
+                  getStatusBgClass(stock.status)
+                ]"
               >
-                {{ stock.status }}
+                {{ $t("status." + stock.status) }}
               </q-chip>
               <div class="row q-gutter-xs justify-center q-mt-sm wrap">
                 <q-btn
                   flat
                   dense
                   no-caps
-                  icon="fullscreen"
-                  label="View"
+                  icon="ph-regular ph-corners-out"
+                  :label="$t('common.actions')"
                   @click="openImagePreview"
                 />
                 <q-btn
                   flat
                   dense
                   no-caps
-                  icon="camera_alt"
-                  label="Retake"
+                  icon="ph-regular ph-camera"
+                  :label="$t('insertStock.scanBarcode')"
                   @click="startCameraCapture"
                 />
                 <q-btn
@@ -54,16 +58,16 @@
                   flat
                   dense
                   no-caps
-                  icon="crop"
-                  label="Crop"
+                  icon="ph-regular ph-crop"
+                  :label="$t('common.edit')"
                   @click="startImageCrop"
                 />
                 <q-btn
                   flat
                   dense
                   no-caps
-                  icon="upload"
-                  label="Replace"
+                  icon="ph-regular ph-upload-simple"
+                  :label="$t('common.edit')"
                   @click="fileInput?.click()"
                 />
                 <q-btn
@@ -71,8 +75,8 @@
                   dense
                   no-caps
                   color="negative"
-                  icon="delete"
-                  label="Remove"
+                  icon="ph-regular ph-trash"
+                  :label="$t('common.delete')"
                   @click="imageRemoveConfirmOpen = true"
                 />
               </div>
@@ -83,27 +87,28 @@
             >
               <q-chip
                 dense
-                :color="statusColor(stock.status)"
-                text-color="white"
-                class="absolute-top-left q-ma-sm text-uppercase text-weight-bold"
+                :class="[
+                  'absolute-top-left',
+                  'q-ma-sm',
+                  'text-uppercase',
+                  'stock-status-chip',
+                  getStatusBgClass(stock.status)
+                ]"
               >
-                {{ stock.status }}
+                {{ $t("status." + stock.status) }}
               </q-chip>
-              <q-icon name="image" size="3rem" color="grey-4" />
+              <q-icon name="ph-regular ph-image" size="3rem" color="grey-4" />
               <div class="q-mt-md">
                 <q-btn
                   color="primary"
                   unelevated
-                  icon="camera_alt"
-                  label="Take photo"
+                  icon="ph-regular ph-camera"
+                  :label="$t('insertStock.scanBarcode')"
                   no-caps
                   class="app-cta-btn"
                   @click="startCameraCapture"
                 />
               </div>
-              <div class="text-caption text-grey-6 q-mt-xs"
-                >Capture or upload a product photo</div
-              >
             </div>
           </q-card-section>
         </q-card>
@@ -122,7 +127,7 @@
         <q-form @submit.prevent="saveStock">
           <q-expansion-item
             default-opened
-            icon="inventory_2"
+            icon="ph-regular ph-package"
             label="Details"
             class="app-card q-mb-sm"
           >
@@ -194,7 +199,7 @@
           </q-expansion-item>
 
           <q-expansion-item
-            icon="sell"
+            icon="ph-regular ph-tag"
             label="Pricing"
             default-opened
             class="app-card q-mb-sm"
@@ -248,7 +253,7 @@
           </q-expansion-item>
 
           <q-expansion-item
-            icon="place"
+            icon="ph-regular ph-map-pin"
             label="Location"
             class="app-card q-mb-md"
           >
@@ -292,7 +297,7 @@
             <q-btn
               type="submit"
               color="primary"
-              icon="save"
+              icon="ph-regular ph-floppy-disk"
               label="Save"
               no-caps
               size="md"
@@ -314,7 +319,7 @@
         <q-dialog v-model="imageRemoveConfirmOpen" persistent>
           <q-card style="width: 350px; max-width: 90vw" class="q-pa-md">
             <q-card-section class="row items-center q-pb-none">
-              <q-avatar icon="image" color="warning" text-color="white" />
+              <q-avatar icon="ph-regular ph-image" color="warning" text-color="white" />
               <span class="q-ml-sm text-weight-bold">Remove product image</span>
             </q-card-section>
             <q-card-section>
@@ -344,7 +349,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { Capacitor } from "@capacitor/core";
@@ -357,17 +362,20 @@ import {
 } from "../utils/stockImageClient";
 import { deleteCloudinaryByToken } from "../utils/cloudinaryClient";
 import {
-  fetchThriftCategories,
-  fetchThriftShelves,
-  fetchThriftTypes,
-  type ThriftCatalogOption
-} from "../composables/useThriftCatalog";
-import { useThriftCurrencyStore } from "../stores/thriftCurrencyStore";
+  useThriftCurrenciesQuery,
+  useCurrencyById
+} from "../composables/useThriftCurrenciesQuery";
+import {
+  useThriftCategoriesQuery,
+  useThriftTypesQuery,
+  useThriftShelvesQuery
+} from "../composables/useThriftCatalogQuery";
 import {
   fetchThriftStockById,
   type ThriftStockDetail
 } from "../composables/useThriftStockDetail";
 import { updateThriftStock } from "../composables/useThriftStockUpdate";
+import { useUpdateStockMutation } from "../composables/useThriftStockMutations";
 import { refreshShipmentCurrencyIds } from "../composables/useThriftShipment";
 import {
   THRIFT_CONDITION_OPTIONS,
@@ -376,17 +384,70 @@ import {
 import PageInitialLoader from "../components/PageInitialLoader.vue";
 import SmartImage from "../components/SmartImage.vue";
 
+import { useThriftStockDetailQuery } from "../composables/useThriftStockDetailQuery";
+
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 const authStore = useAuthStore();
-const currencyStore = useThriftCurrencyStore();
+
+useThriftCurrenciesQuery();
+
+const tenantIdRef = computed(() => authStore.tenantId ?? 0);
+const categoriesQuery = useThriftCategoriesQuery(tenantIdRef);
+const typesQuery = useThriftTypesQuery(tenantIdRef);
+const shelvesQuery = useThriftShelvesQuery(tenantIdRef);
+
+const categoryOptions = computed(() => categoriesQuery.data.value || []);
+const typeOptions = computed(() => typesQuery.data.value || []);
+const shelfOptions = computed(() => shelvesQuery.data.value || []);
+
+const stockId = computed(() => Number(route.params.id));
+const stockDetailQuery = useThriftStockDetailQuery(tenantIdRef, stockId);
+const updateStockMutation = useUpdateStockMutation();
 
 const { capturePhoto, cropPhoto } = useProductPhoto();
 
-const loading = ref(true);
+const loading = computed(() => stockDetailQuery.isPending.value);
 const saving = ref(false);
 const stock = ref<ThriftStockDetail | null>(null);
+
+watch(
+  () => stockDetailQuery.data.value,
+  async (newDetail) => {
+    if (newDetail) {
+      stock.value = newDetail;
+      populateForm(newDetail);
+      if (tenantIdRef.value && newDetail.shipment_id) {
+        try {
+          const shipment = await refreshShipmentCurrencyIds(
+            newDetail.shipment_id,
+            tenantIdRef.value
+          );
+          shipmentCostCurrencyId.value = shipment?.cost_currency_id ?? null;
+          shipmentPurchaseCurrencyId.value = shipment?.purchase_currency_id ?? null;
+        } catch (err) {
+          console.error("Failed to load shipment currency details:", err);
+        }
+      }
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => stockDetailQuery.isError.value,
+  (isErr) => {
+    if (isErr && stockDetailQuery.error.value) {
+      const message =
+        stockDetailQuery.error.value instanceof Error
+          ? stockDetailQuery.error.value.message
+          : "Failed to load stock";
+      $q.notify({ type: "negative", message });
+    }
+  }
+);
+
 const fileInput = ref<HTMLInputElement | null>(null);
 const smartImageRef = ref<InstanceType<typeof SmartImage> | null>(null);
 const imageRemoveConfirmOpen = ref(false);
@@ -397,10 +458,6 @@ const originalImageUrl = ref("");
 const originalDriveFileId = ref("");
 const shipmentCostCurrencyId = ref<number | null>(null);
 const shipmentPurchaseCurrencyId = ref<number | null>(null);
-
-const categoryOptions = ref<ThriftCatalogOption[]>([]);
-const typeOptions = ref<ThriftCatalogOption[]>([]);
-const shelfOptions = ref<Array<{ id: number; shelf_code: string }>>([]);
 
 const form = ref({
   brand_name: "",
@@ -428,23 +485,21 @@ const sectionOptions = [...THRIFT_SECTION_OPTIONS];
 const conditionOptions = [...THRIFT_CONDITION_OPTIONS];
 const statusOptions = ["AVAILABLE", "OUT_OF_STOCK", "DAMAGED", "STOLEN"];
 
-const costCurrency = computed(() => {
-  const id =
-    shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId;
-  return currencyStore.currencyById(id);
-});
-const purchaseCurrency = computed(() => {
-  const id =
+const activeCostCurrencyId = computed(
+  () => shipmentCostCurrencyId.value ?? authStore.thriftDefaultCostCurrencyId
+);
+const activePurchaseCurrencyId = computed(
+  () =>
     shipmentPurchaseCurrencyId.value ??
-    authStore.thriftDefaultPurchaseCurrencyId;
-  return currencyStore.currencyById(id);
-});
+    authStore.thriftDefaultPurchaseCurrencyId
+);
+
+const costCurrency = useCurrencyById(activeCostCurrencyId);
+const purchaseCurrency = useCurrencyById(activePurchaseCurrencyId);
 const costCurrencySymbol = computed(() => costCurrency.value?.symbol ?? "");
 const purchaseCurrencySymbol = computed(
   () => purchaseCurrency.value?.symbol ?? ""
 );
-
-const stockId = computed(() => Number(route.params.id));
 
 const canCrop = computed(
   () => Capacitor.isNativePlatform() && !!previewImageUrl.value
@@ -475,18 +530,18 @@ const goBack = () => {
   router.push("/stock-list");
 };
 
-const statusColor = (status: string) => {
+const getStatusBgClass = (status: string) => {
   switch (status) {
     case "AVAILABLE":
-      return "positive";
+      return "bg-emerald-50 text-emerald-700";
     case "OUT_OF_STOCK":
-      return "grey-6";
+      return "bg-slate-100 text-slate-700";
     case "DAMAGED":
-      return "warning";
+      return "bg-amber-50 text-amber-700";
     case "STOLEN":
-      return "negative";
+      return "bg-rose-50 text-rose-700";
     default:
-      return "primary";
+      return "bg-slate-100 text-slate-700";
   }
 };
 
@@ -593,61 +648,6 @@ const openImagePreview = () => {
   smartImageRef.value?.openLightbox();
 };
 
-const loadStock = async () => {
-  const tenantId = authStore.tenantId;
-  if (!tenantId) {
-    $q.notify({ type: "negative", message: "No workspace selected" });
-    loading.value = false;
-    return;
-  }
-
-  if (!Number.isFinite(stockId.value) || stockId.value <= 0) {
-    $q.notify({ type: "negative", message: "Invalid stock item" });
-    loading.value = false;
-    goBack();
-    return;
-  }
-
-  loading.value = true;
-  try {
-    const detail = await fetchThriftStockById(tenantId, stockId.value);
-    if (!detail) {
-      $q.notify({ type: "warning", message: "Stock item not found" });
-      goBack();
-      return;
-    }
-
-    stock.value = detail;
-    populateForm(detail);
-
-    await Promise.all([
-      currencyStore.loadCurrencies(),
-      fetchThriftCategories(tenantId).then(r => {
-        categoryOptions.value = r;
-      }),
-      fetchThriftTypes(tenantId).then(r => {
-        typeOptions.value = r;
-      }),
-      fetchThriftShelves(tenantId).then(r => {
-        shelfOptions.value = r;
-      })
-    ]);
-
-    const shipment = await refreshShipmentCurrencyIds(
-      detail.shipment_id,
-      tenantId
-    );
-    shipmentCostCurrencyId.value = shipment?.cost_currency_id ?? null;
-    shipmentPurchaseCurrencyId.value = shipment?.purchase_currency_id ?? null;
-  } catch (err) {
-    console.error("Load stock failed:", err);
-    const message = err instanceof Error ? err.message : "Failed to load stock";
-    $q.notify({ type: "negative", message });
-  } finally {
-    loading.value = false;
-  }
-};
-
 const saveStock = async () => {
   if (!stock.value) return;
   saving.value = true;
@@ -714,7 +714,7 @@ const saveStock = async () => {
       updateParams.driveFileId = driveFilePayload ?? null;
     }
 
-    await updateThriftStock(updateParams);
+    await updateStockMutation.mutateAsync(updateParams);
 
     if (imageUrl !== undefined && (previousImageUrl || previousDriveFileId)) {
       const savedUrl = imageUrl || "";
@@ -742,10 +742,6 @@ const saveStock = async () => {
     saving.value = false;
   }
 };
-
-onMounted(() => {
-  void loadStock();
-});
 
 onBeforeUnmount(() => {
   revokePreviewUrl();

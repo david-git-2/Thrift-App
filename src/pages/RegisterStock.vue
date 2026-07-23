@@ -1,6 +1,12 @@
 <template>
-  <q-page class="bw-page theme-app">
+  <q-page class="bw-page theme-app bg-grey-1">
     <div class="bw-page__stack">
+      <AppPageHeader
+        :title="$t('insertStock.title')"
+        show-help
+        @help="showRegisterHelp = true"
+      />
+
       <!-- Active Shipment & Box context banner -->
       <q-banner dense class="app-context-banner text-white q-py-sm">
         <template v-slot:avatar>
@@ -13,16 +19,28 @@
               · {{ selectedBox?.name || "No box" }}
             </span>
           </div>
-          <q-btn
-            flat
-            dense
-            no-caps
-            color="white"
-            icon="edit"
-            label="Change"
-            @click="changeContext"
-            class="q-ml-sm"
-          />
+          <div class="row items-center q-gutter-x-xs">
+            <q-btn
+              flat
+              round
+              dense
+              icon="help_outline"
+              color="white"
+              @click="showRegisterHelp = true"
+            >
+              <q-tooltip>Registration Help</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="white"
+              icon="edit"
+              label="Change"
+              @click="changeContext"
+              class="q-ml-xs"
+            />
+          </div>
         </div>
       </q-banner>
 
@@ -35,12 +53,7 @@
             <q-card-section>
               <div class="app-section-title">
                 <q-icon name="qr_code" />
-                Barcode Identification
-                <span
-                  v-if="!tempBarcode"
-                  class="app-section-title__required-badge"
-                  >Required</span
-                >
+                {{ $t("insertStock.barcodeLabel") }}
               </div>
 
               <!-- Barcode Display / Scan Button -->
@@ -85,7 +98,7 @@
               </div>
 
               <div v-else-if="barcodeChecking" class="text-center q-py-md">
-                <PageInitialLoader compact message="Checking barcode..." />
+                <PageInitialLoader compact :message="$t('common.loading')" />
               </div>
 
               <div
@@ -96,7 +109,7 @@
                   color="primary"
                   unelevated
                   icon="qr_code_scanner"
-                  label="Scan Barcode"
+                  :label="$t('insertStock.scanBarcode')"
                   class="full-width app-cta-btn"
                   no-caps
                   @click="startBarcodeScan"
@@ -350,6 +363,15 @@
         class="hidden"
         @change="handleWebFileChange"
       />
+
+      <!-- Stock Registration Help Dialog -->
+      <AppHelpDialog
+        v-model="showRegisterHelp"
+        :title="$t('help.insertStock.title')"
+        :subtitle="$t('help.insertStock.subtitle')"
+        icon="add_box"
+        :steps="registerHelpSteps"
+      />
     </div>
 
     <PageInitialLoader
@@ -362,6 +384,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useQuasar, type QForm } from "quasar";
 import { useThriftStore } from "../stores/thriftStore";
@@ -371,29 +394,51 @@ import { Capacitor } from "@capacitor/core";
 import { useBarcodeScan } from "../composables/useBarcodeScan";
 import { useProductPhoto } from "../composables/useProductPhoto";
 import {
-  registerThriftStockFromApp,
   uploadStockImage,
   cleanupStockImageAssets,
   type StockImageUploadResult
 } from "../composables/useThriftStockRegister";
+import { useRegisterStockMutation } from "../composables/useThriftStockMutations";
 import { deleteCloudinaryByToken } from "../utils/cloudinaryClient";
 import {
   validateBarcodeForRegistration,
   type BarcodeAvailability
 } from "../composables/useThriftBarcode";
+import { useThriftBarcodeValidationQuery } from "../composables/useThriftBarcodeQuery";
 import { THRIFT_CONDITION_OPTIONS } from "../constants/thriftEnums";
 import PageInitialLoader from "../components/PageInitialLoader.vue";
+import AppPageHeader from "../components/AppPageHeader.vue";
+import AppHelpDialog from "../components/AppHelpDialog.vue";
 
 const router = useRouter();
 const $q = useQuasar();
+const { tm } = useI18n();
 const thriftStore = useThriftStore();
 const authStore = useAuthStore();
 const { scanBarcode } = useBarcodeScan();
 const { capturePhoto, cropPhoto } = useProductPhoto();
+const registerStockMutation = useRegisterStockMutation();
 
 // State
 const stockFormRef = ref<QForm | null>(null);
 const submitting = ref(false);
+const showRegisterHelp = ref(false);
+
+const registerHelpSteps = computed(() => [
+  {
+    title: tm("help.insertStock.steps.step1Title") as string,
+    description: tm("help.insertStock.steps.step1Desc") as string,
+    tip: tm("help.insertStock.steps.step1Tip") as string,
+  },
+  {
+    title: tm("help.insertStock.steps.step2Title") as string,
+    description: tm("help.insertStock.steps.step2Desc") as string,
+  },
+  {
+    title: tm("help.insertStock.steps.step3Title") as string,
+    description: tm("help.insertStock.steps.step3Desc") as string,
+  },
+]);
 
 // Web Capture variables
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -681,7 +726,7 @@ const submitStock = async () => {
     });
     pendingDeleteToken = uploadResult.deleteToken || "";
 
-    await registerThriftStockFromApp({
+    await registerStockMutation.mutateAsync({
       tenantId: workspaceTenantId,
       barcode,
       shipmentId,
