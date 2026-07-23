@@ -131,7 +131,13 @@ body {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
   color: #022c22 !important;
+  /* Stable min inset avoids 0→status-bar jump/blink on Android WebView */
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html:not(.plat-android) .app-header {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .app-header--hidden {

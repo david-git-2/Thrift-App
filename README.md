@@ -91,16 +91,32 @@ npm run sync
 
 ---
 
-## 🔐 Google OAuth & Deep Linking
+## 🔐 Google Sign-In (Android native + Web)
 
-To enable native Google OAuth login redirection back to the mobile application:
+### Web
+Unchanged: browser Google OAuth via Supabase `signInWithOAuth`.
 
-1. Open your **Supabase Dashboard** > **Authentication** > **URL Configuration**.
-2. Add the custom scheme URI to your **Redirect URLs**:
-   ```
-   com.brandwala.thriftapp://auth-callback
-   ```
-3. Save changes.
+### Android (native — no Custom Tab)
+Uses `@capgo/capacitor-social-login` + Supabase `signInWithIdToken`.
+
+1. Install (root + Capacitor folder), then sync:
+
+```bash
+npm install @capgo/capacitor-social-login@^8
+cd src-capacitor && npm install @capgo/capacitor-social-login@^8 && npx cap sync android
+```
+
+2. In **Google Cloud Console** → Credentials (same project as Supabase Google provider):
+   - Keep / create a **Web application** OAuth client → copy its Client ID into `.env` as `VITE_GOOGLE_WEB_CLIENT_ID`.
+   - Create an **Android** OAuth client with:
+     - Package name: `com.brandwala.thriftapp`
+     - SHA-1 from `cd src-capacitor/android && ./gradlew signingReport` (debug and/or release)
+
+3. In **Supabase** → Authentication → Providers → Google, use that same **Web** Client ID (and secret).
+
+4. Rebuild the app (`npm run build:android` or Android Studio).
+
+Deep link `com.brandwala.thriftapp://auth-callback` is optional now (legacy / web bridge only).
 
 ---
 

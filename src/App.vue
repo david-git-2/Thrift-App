@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+  <div class="app-root">
+    <router-view />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +11,7 @@ import { App as CapApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { supabase } from "./boot/supabase";
+import { getAuthReadyState } from "./boot/authBootstrap";
 
 import { useAuthStore } from "./stores/authStore";
 
@@ -16,30 +19,31 @@ const router = useRouter();
 const authStore = useAuthStore();
 const THRIFT_TENANT_SLUG = "thrift";
 
+let handledLaunchUrl: string | null = null;
+
 /**
  * Handle incoming deep link URLs from OAuth redirect.
- * Supports three token delivery formats:
- *  1. Query params  (Android intent URI): ?access_token=xxx&refresh_token=yyy
- *  2. PKCE code flow:                     ?code=xxx
- *  3. Hash fragment (iOS fallback):       #access_token=xxx&refresh_token=yyy
  */
 async function handleDeepLink(urlStr: string) {
   try {
     console.log("[handleDeepLink] URL:", urlStr);
 
-    // Replace custom scheme so URL can be parsed natively by the browser engine
     const parsedUrl = new URL(
       urlStr.replace("com.brandwala.thriftapp://", "http://localhost/")
     );
 
-    if (!parsedUrl.pathname.includes("auth-callback")) return;
+    if (
+      !parsedUrl.pathname.includes("auth-callback") &&
+      parsedUrl.hostname !== "auth-callback"
+    ) {
+      return;
+    }
 
     const hash = parsedUrl.hash;
     const searchParams = new URLSearchParams(parsedUrl.search);
     const tenantSlug = searchParams.get("tenant_slug") || "thrift";
     let sessionSet = false;
 
-    // ── 1. PKCE code flow (?code=...) ──────────────────────────────────
     if (searchParams.has("code")) {
       const code = searchParams.get("code")!;
       const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -50,7 +54,6 @@ async function handleDeepLink(urlStr: string) {
       }
     }
 
-    // ── 2. Query-param tokens (Android intent URI) (?access_token=...) ─
     if (
       !sessionSet &&
       searchParams.has("access_token") &&
@@ -67,7 +70,6 @@ async function handleDeepLink(urlStr: string) {
       }
     }
 
-    // ── 3. Hash-fragment tokens (iOS fallback) (#access_token=...) ─────
     if (!sessionSet && hash && hash.startsWith("#")) {
       const hashParams = new URLSearchParams(hash.substring(1));
       if (hashParams.has("access_token") && hashParams.has("refresh_token")) {
@@ -103,10 +105,29 @@ async function handleDeepLink(urlStr: string) {
   }
 }
 
+function isAuthCallbackUrl(url: string) {
+  return (
+    url.includes("auth-callback") &&
+    (url.includes("code=") ||
+      url.includes("access_token=") ||
+      url.includes("#access_token"))
+  );
+}
+
 onMounted(async () => {
+  // Ensure boot auth finished (router already waited; this is a no-op if ready)
+  const ready = getAuthReadyState();
+  if (!ready.ready) {
+    await ready.promise;
+  }
+
   if (!Capacitor.isNativePlatform()) return;
 
-  // ── Listen for Chrome Custom Tab closure ─────────────────────────────
+  document.documentElement.classList.add("plat-native");
+  if (Capacitor.getPlatform() === "android") {
+    document.documentElement.classList.add("plat-android");
+  }
+
   Browser.addListener("browserFinished", async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session && !authStore.isAuthenticated) {
@@ -117,20 +138,27 @@ onMounted(async () => {
     }
   });
 
-  // ── CRITICAL: Check for the URL that LAUNCHED the app ─────────────────
-  // When the app starts fresh from a deep-link intent, `appUrlOpen` fires
-  // before Vue mounts — so the listener below misses it. getLaunchUrl()
-  // captures that initial URL and is always available after mount.
   const launchUrlResult = await CapApp.getLaunchUrl();
-  if (launchUrlResult?.url) {
+  if (
+    launchUrlResult?.url &&
+    isAuthCallbackUrl(launchUrlResult.url) &&
+    launchUrlResult.url !== handledLaunchUrl
+  ) {
+    handledLaunchUrl = launchUrlResult.url;
     console.log("[onMounted] Launch URL found:", launchUrlResult.url);
     await handleDeepLink(launchUrlResult.url);
   }
 
-  // ── Also listen for deep links when the app is already running ─────────
   CapApp.addListener("appUrlOpen", async data => {
+    if (!isAuthCallbackUrl(data.url)) return;
     console.log("[appUrlOpen] URL:", data.url);
     await handleDeepLink(data.url);
   });
 });
 </script>
+
+<style scoped>
+.app-root {
+  min-height: 100vh;
+}
+</style>

@@ -164,6 +164,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
 import { useLocaleStore } from "../stores/localeStore";
 import { supabase } from "../boot/supabase";
+import { markIntentionalSignOut } from "../boot/authListener";
 import { APP_VERSION } from "../constants/appVersion";
 import BarcodeScanOverlay from "../components/BarcodeScanOverlay.vue";
 import BrandMark from "../components/BrandMark.vue";
@@ -230,6 +231,7 @@ const onAvatarError = () => {
 };
 
 const onLogout = async () => {
+  markIntentionalSignOut();
   authStore.clearAccess();
   await supabase.auth.signOut();
   await router.replace("/login");

@@ -44,15 +44,41 @@ const { processLoginResult } = useOAuthLogin();
 const isRedirectingToApp = ref(false);
 const appRedirectUrl = ref("");
 
+function buildNativeAppRedirect(params: URLSearchParams) {
+  const query = params.toString();
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    return `intent://auth-callback?${query}#Intent;scheme=com.brandwala.thriftapp;package=com.brandwala.thriftapp;end`;
+  }
+  return `com.brandwala.thriftapp://auth-callback?${query}`;
+}
+
 onMounted(async () => {
-  // Check if we are running in system browser (web) but user logged in via native app trigger
   const searchParams = new URLSearchParams(window.location.search);
-  const isAppScope = searchParams.get("scope") === "app";
+  const isAppScope =
+    searchParams.get("scope") === "app" ||
+    searchParams.get("app_redirect") === "thrift";
 
   if (isAppScope && !Capacitor.isNativePlatform()) {
     isRedirectingToApp.value = true;
 
-    // Poll for the session to be established by Supabase's automatic PKCE/hash exchange
+    const tenantSlug = searchParams.get("tenant_slug") || "thrift";
+
+    // ── PKCE code passthrough ──────────────────────────────────────────
+    // Native app stores code_verifier in its WebView. Do NOT exchange here.
+    const code = searchParams.get("code");
+    if (code) {
+      const deepLinkParams = new URLSearchParams({
+        code,
+        scope: "app",
+        tenant_slug: tenantSlug
+      });
+      appRedirectUrl.value = buildNativeAppRedirect(deepLinkParams);
+      window.location.href = appRedirectUrl.value;
+      return;
+    }
+
+    // Fallback: session already present → pass tokens
     let session = null;
     for (let i = 0; i < 60; i++) {
       const { data } = await supabase.auth.getSession();
@@ -63,29 +89,19 @@ onMounted(async () => {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    if (session) {
-      const tenantSlug = searchParams.get("tenant_slug") || "thrift";
-      const accessToken = session.access_token;
-      const refreshToken = session.refresh_token;
-
-      if (accessToken && refreshToken) {
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        if (isAndroid) {
-          // IMPORTANT: Android intent URIs only support ONE # (for the #Intent;...;end block).
-          // Tokens MUST be in query params, not a hash fragment.
-          appRedirectUrl.value = `intent://auth-callback?scope=app&tenant_slug=${tenantSlug}&access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}#Intent;scheme=com.brandwala.thriftapp;package=com.brandwala.thriftapp;end`;
-        } else {
-          // Standard custom scheme for iOS — tokens in query params for consistency
-          appRedirectUrl.value = `com.brandwala.thriftapp://auth-callback?scope=app&tenant_slug=${tenantSlug}&access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`;
-        }
-        // Trigger client-side scheme redirect
-        window.location.href = appRedirectUrl.value;
-        return;
-      }
+    if (session?.access_token && session.refresh_token) {
+      const deepLinkParams = new URLSearchParams({
+        scope: "app",
+        tenant_slug: tenantSlug,
+        access_token: session.access_token,
+        refresh_token: session.refresh_token
+      });
+      appRedirectUrl.value = buildNativeAppRedirect(deepLinkParams);
+      window.location.href = appRedirectUrl.value;
+      return;
     }
   }
 
-  // Fallback to local session bootstrap (if native app, or regular web user)
   void processLoginResult();
 });
 </script>
@@ -96,7 +112,7 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f5ece2;
+  background: #030f08;
   padding: 1rem;
 }
 

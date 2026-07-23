@@ -29,7 +29,6 @@
             :placeholder="$t('stockList.searchPlaceholder')"
             debounce="400"
             class="min-input-target"
-            @update:model-value="onSearch"
           >
             <template #append>
               <q-icon name="ph-regular ph-magnifying-glass" color="grey-6" />
@@ -47,7 +46,6 @@
                 emit-value
                 map-options
                 class="min-input-target"
-                @update:model-value="onFilterChange"
               />
             </div>
             <div class="col-6 col-sm-3">
@@ -60,7 +58,6 @@
                 emit-value
                 map-options
                 class="min-input-target"
-                @update:model-value="onFilterChange"
               />
             </div>
             <div class="col-6 col-sm-3">
@@ -88,7 +85,6 @@
                 map-options
                 clearable
                 class="min-input-target"
-                @update:model-value="onFilterChange"
               />
             </div>
           </div>
@@ -147,8 +143,11 @@
 
         <!-- Stock list -->
         <div v-else class="q-gutter-y-xs">
-          <!-- Background fetching indicator -->
-          <div v-if="isFetching && stocks.length > 0" class="q-pb-xs">
+          <!-- Background refetch indicator (not next-page loads) -->
+          <div
+            v-if="isFetching && !isFetchingNextPage && stocks.length > 0"
+            class="q-pb-xs"
+          >
             <q-linear-progress
               query
               color="primary"
@@ -156,6 +155,12 @@
             />
           </div>
 
+          <q-infinite-scroll
+            :key="listScrollKey"
+            :offset="300"
+            :disable="isLoading"
+            @load="onLoadMore"
+          >
           <q-list class="q-gutter-y-xs">
             <q-slide-item
               v-for="item in stocks"
@@ -304,6 +309,13 @@
             </q-slide-item>
           </q-list>
 
+            <template #loading>
+              <div class="row justify-center q-my-md">
+                <q-spinner-dots color="primary" size="40px" />
+              </div>
+            </template>
+          </q-infinite-scroll>
+
           <!-- Move Location Dialog -->
           <q-dialog v-model="showMoveDialog" persistent>
             <q-card style="min-width: 320px" class="q-pa-sm rounded-borders">
@@ -430,17 +442,6 @@
               </q-card-actions>
             </q-card>
           </q-dialog>
-
-          <!-- Pagination -->
-          <div v-if="meta.total_pages > 1" class="flex flex-center q-py-sm">
-            <q-pagination
-              v-model="page"
-              :max="meta.total_pages"
-              :max-pages="5"
-              direction-links
-              color="primary"
-            />
-          </div>
         </div>
       </q-pull-to-refresh>
     </div>
@@ -461,7 +462,6 @@ import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import { useI18n } from "vue-i18n";
-import { useQuery } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/authStore";
 import AppHelpDialog, { type HelpStep } from "../components/AppHelpDialog.vue";
 import { useThriftCurrenciesQuery } from "../composables/useThriftCurrenciesQuery";
@@ -478,7 +478,6 @@ import {
 } from "../composables/useThriftStockMutations";
 import { formatThriftAmount } from "../utils/formatThriftAmount";
 import { THRIFT_CONDITION_FILTER_OPTIONS } from "../constants/thriftEnums";
-import { thriftQueryKeys } from "../queryKeys/thriftQueryKeys";
 import AppPageHeader from "../components/AppPageHeader.vue";
 
 const router = useRouter();
@@ -506,13 +505,22 @@ const helpSteps = computed<HelpStep[]>(() => [
 const { data: currencies } = useThriftCurrenciesQuery();
 
 const tenantId = computed(() => authStore.tenantId);
-const page = ref(1);
 const pageSize = 20;
 const searchQuery = ref("");
 const selectedStatus = ref<string | null>("AVAILABLE");
 const selectedCondition = ref<string | null>(null);
 const selectedShelf = ref<number | null>(null);
 const selectedBox = ref<number | null>(null);
+
+const listScrollKey = computed(() =>
+  [
+    searchQuery.value,
+    selectedStatus.value,
+    selectedCondition.value,
+    selectedShelf.value,
+    selectedBox.value
+  ].join("|")
+);
 
 // Fetch shelves & boxes with TanStack Query
 const shelvesQuery = useThriftShelvesQuery(tenantId);
@@ -532,9 +540,16 @@ const boxOptions = computed(() => [
     [])
 ]);
 
-const { data, isLoading, isFetching, refetch } = useThriftStockListQuery({
+const {
+  data,
+  isLoading,
+  isFetching,
+  isFetchingNextPage,
+  hasNextPage,
+  fetchNextPage,
+  refetch
+} = useThriftStockListQuery({
   tenantId,
-  page,
   pageSize,
   search: searchQuery,
   status: selectedStatus,
@@ -543,16 +558,23 @@ const { data, isLoading, isFetching, refetch } = useThriftStockListQuery({
   boxId: selectedBox
 });
 
-const stocks = computed<ThriftStockListItem[]>(() => data.value?.data ?? []);
-const meta = computed(
-  () =>
-    data.value?.meta ?? {
-      total: 0,
-      page: 1,
-      page_size: pageSize,
-      total_pages: 0
-    }
+const stocks = computed<ThriftStockListItem[]>(
+  () => data.value?.pages.flatMap(page => page.data) ?? []
 );
+
+const onLoadMore = async (_index: number, done: (stop?: boolean) => void) => {
+  if (!hasNextPage.value) {
+    done(true);
+    return;
+  }
+
+  try {
+    await fetchNextPage();
+    done(!hasNextPage.value);
+  } catch {
+    done(true);
+  }
+};
 
 const shipmentCurrencyMap = ref<Map<number, number>>(new Map());
 
@@ -695,17 +717,8 @@ const onRefresh = async (done: () => void) => {
   done();
 };
 
-const onSearch = () => {
-  page.value = 1;
-};
-
-const onFilterChange = () => {
-  page.value = 1;
-};
-
 const onShelfChange = () => {
   selectedBox.value = null;
-  page.value = 1;
 };
 
 const clearFilters = () => {
@@ -714,7 +727,6 @@ const clearFilters = () => {
   selectedCondition.value = null;
   selectedShelf.value = null;
   selectedBox.value = null;
-  page.value = 1;
 };
 
 // Essential measurements parser (Bust/Chest, Length, Waist, Hips, Sleeve, Shoulder, etc.)

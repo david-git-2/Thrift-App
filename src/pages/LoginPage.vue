@@ -149,10 +149,10 @@ import { useOAuthLogin } from "../composables/useOAuthLogin";
 import BrandMark from "../components/BrandMark.vue";
 
 const route = useRoute();
-const { handleGoogleLogin, isLoading } = useOAuthLogin();
+const { handleGoogleLogin, isLoading, loginError } = useOAuthLogin();
 
 const errorMessage = computed(() => {
-  const err = route.query.error;
+  const err = loginError.value || route.query.error;
   if (err === "no_membership") {
     return "This account does not have permission for the Thrift workspace.";
   }
@@ -162,6 +162,9 @@ const errorMessage = computed(() => {
   if (err === "membership_failed") {
     return "Failed to verify membership details. Please try again.";
   }
+  if (typeof err === "string" && err.includes("VITE_GOOGLE_WEB_CLIENT_ID")) {
+    return "Google Sign-In is not configured. Set VITE_GOOGLE_WEB_CLIENT_ID and rebuild.";
+  }
   if (err) {
     return "Authentication error occurred. Please try again.";
   }
@@ -169,7 +172,7 @@ const errorMessage = computed(() => {
 });
 
 const onGoogleLogin = () => {
-  handleGoogleLogin();
+  void handleGoogleLogin();
 };
 </script>
 
@@ -197,10 +200,13 @@ const onGoogleLogin = () => {
   background: var(--auth-bg);
   position: relative;
   overflow: hidden;
+  /* Safe-area insets are absorbed by .auth-canvas (top) and .auth-panel
+     (bottom) so the layout root never shifts and causes a blink. */
 }
 
 .auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0 !important;
   background: transparent !important;
   max-width: none !important;
@@ -280,7 +286,10 @@ const onGoogleLogin = () => {
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Top padding absorbs the status-bar safe-area inset on first paint —
+     the canvas background is fixed so there is no layout-shift blink. */
   padding: clamp(1.75rem, 3.5vw, 2.75rem);
+  padding-top: calc(clamp(1.75rem, 3.5vw, 2.75rem) + env(safe-area-inset-top, 24px));
   overflow: hidden;
   background-image:
     linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px),
@@ -301,7 +310,7 @@ const onGoogleLogin = () => {
     transparent 0%,
     var(--auth-glow) 40%,
     var(--auth-glow) 60%,
-    transparent 100-30%
+    transparent 100%
   );
 }
 
@@ -381,6 +390,7 @@ const onGoogleLogin = () => {
   align-content: center;
   background: #ffffff;
   padding: clamp(1.75rem, 4vw, 3rem) clamp(1.5rem, 3.5vw, 2.5rem);
+  padding-bottom: calc(clamp(1.75rem, 4vw, 3rem) + env(safe-area-inset-bottom, 0px));
   box-shadow: -24px 0 80px rgb(0 0 0 / 0.45);
 }
 
