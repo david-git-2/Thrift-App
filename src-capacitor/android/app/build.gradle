@@ -55,8 +55,10 @@ android {
     buildTypes {
         release {
             signingConfig    signingConfigs.release
-            minifyEnabled    true
-            shrinkResources  true
+            // minify can break Capgo SocialLogin / Credential Manager on device.
+            // Re-enable only after Google Sign-In works on a release APK.
+            minifyEnabled    false
+            shrinkResources  false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

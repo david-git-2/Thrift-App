@@ -1,8 +1,8 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "../boot/supabase";
 import { useAuthStore } from "../stores/authStore";
-import { Capacitor } from "@capacitor/core";
 import { markIntentionalSignOut } from "../boot/authListener";
 import { bootstrapUserSession } from "../utils/bootstrapUserSession";
 import { loginWithNativeGoogle } from "../utils/nativeGoogleAuth";
@@ -10,6 +10,25 @@ import { loginWithNativeGoogle } from "../utils/nativeGoogleAuth";
 import { THRIFT_TENANT_SLUG } from "../constants/thriftTenant";
 
 export { THRIFT_TENANT_SLUG };
+
+function oauthRedirectTo(): string {
+  const callbackSearchParams = new URLSearchParams({
+    scope: "app",
+    tenant_slug: THRIFT_TENANT_SLUG
+  });
+  return `${window.location.origin}/#/auth/callback?${callbackSearchParams.toString()}`;
+}
+
+function googleLoginErrorMessage(err: unknown): string {
+  const message =
+    err && typeof err === "object" && "message" in err
+      ? String((err as { message?: unknown }).message ?? "")
+      : typeof err === "string"
+        ? err
+        : "";
+  if (message.trim()) return message.trim();
+  return "auth_failed";
+}
 
 export function useOAuthLogin() {
   const router = useRouter();
@@ -37,77 +56,45 @@ export function useOAuthLogin() {
     return true;
   };
 
-  // 1. Google login — native ID token first, Browser OAuth fallback on Android
+  /**
+   * Android/iOS: native Google account picker → ID token → Supabase session.
+   * Web: Supabase OAuth redirect in the browser.
+   */
   const handleGoogleLogin = async () => {
     isLoading.value = true;
     loginError.value = null;
     try {
       if (Capacitor.isNativePlatform()) {
-        try {
-          const { idToken, rawNonce } = await loginWithNativeGoogle();
-          let session = null;
-
-          const withNonce = await supabase.auth.signInWithIdToken({
-            provider: "google",
-            token: idToken,
-            nonce: rawNonce
-          });
-
-          if (withNonce.error) {
-            // Some Google responses omit nonce claim — retry without nonce
-            console.warn(
-              "[Google] signInWithIdToken with nonce failed, retrying without:",
-              withNonce.error.message
-            );
-            const withoutNonce = await supabase.auth.signInWithIdToken({
-              provider: "google",
-              token: idToken
-            });
-            if (withoutNonce.error) throw withoutNonce.error;
-            session = withoutNonce.data.session;
-          } else {
-            session = withNonce.data.session;
-          }
-
-          if (session) {
-            return await completeSessionBootstrap(
-              session.user.email ?? "",
-              session
-            );
-          }
-          throw new Error("No session returned from Google Sign-In");
-        } catch (nativeErr: any) {
-          const msg = String(nativeErr?.message ?? nativeErr ?? "");
-          // User cancelled account picker — silent exit
-          if (
-            /cancel|cancelled|canceled|user_cancelled|USER_CANCELLED/i.test(msg)
-          ) {
-            return false;
-          }
-          console.error("[Google] Native Sign-In failed:", msg);
-          loginError.value = msg || "auth_failed";
-          return false;
-        }
+        const { idToken, rawNonce } = await loginWithNativeGoogle();
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token: idToken,
+          nonce: rawNonce
+        });
+        if (error) throw error;
+        if (!data.session) throw new Error("auth_failed");
+        return await completeSessionBootstrap(
+          data.session.user.email ?? "",
+          data.session
+        );
       }
 
-      const callbackSearchParams = new URLSearchParams({
-        scope: "app",
-        tenant_slug: THRIFT_TENANT_SLUG
-      });
-      const redirectTo = `${window.location.origin}/#/auth/callback?${callbackSearchParams.toString()}`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectTo = oauthRedirectTo();
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo }
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true
+        }
       });
       if (error) throw error;
+      if (!data.url) throw new Error("No OAuth URL returned from Supabase");
+
+      window.location.assign(data.url);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google OAuth error", err);
-      loginError.value =
-        typeof err?.message === "string" && err.message.trim()
-          ? err.message
-          : "auth_failed";
+      loginError.value = googleLoginErrorMessage(err);
       return false;
     } finally {
       isLoading.value = false;

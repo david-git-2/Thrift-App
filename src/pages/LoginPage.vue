@@ -162,11 +162,22 @@ const errorMessage = computed(() => {
   if (err === "membership_failed") {
     return "Failed to verify membership details. Please try again.";
   }
+  if (err === "auth_failed") {
+    return "Authentication failed. Please try again.";
+  }
   if (typeof err === "string" && err.includes("VITE_GOOGLE_WEB_CLIENT_ID")) {
     return "Google Sign-In is not configured. Set VITE_GOOGLE_WEB_CLIENT_ID and rebuild.";
   }
-  if (err) {
-    return "Authentication error occurred. Please try again.";
+  // Release builds often fail with DEVELOPER_ERROR when the release
+  // keystore SHA-1 is missing from Google Cloud Console (Android OAuth client).
+  if (
+    typeof err === "string" &&
+    /DEVELOPER_ERROR|10:|ApiException:\s*10|SHA|certificate/i.test(err)
+  ) {
+    return "Google Sign-In rejected this build. Register the release keystore SHA-1 as an Android OAuth client in Google Cloud Console (package: com.brandwala.thriftapp), then rebuild.";
+  }
+  if (typeof err === "string" && err.trim()) {
+    return err.trim();
   }
   return "";
 });

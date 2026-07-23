@@ -847,6 +847,7 @@ interface ScannedStockItem {
 const router = useRouter();
 const $q = useQuasar();
 const { tm } = useI18n();
+const queryClient = useQueryClient();
 const authStore = useAuthStore();
 useThriftCurrenciesQuery();
 const thriftStore = useThriftStore();
@@ -1204,7 +1205,6 @@ const lookupBarcode = async (barcodeVal: string) => {
       }
     }
 
-    const queryClient = useQueryClient();
     const detail = await queryClient.fetchQuery({
       queryKey: thriftQueryKeys.stockByBarcode(lookupBarcodeValue),
       queryFn: () => fetchThriftStockByBarcode(tenantId, lookupBarcodeValue),

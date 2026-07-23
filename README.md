@@ -97,26 +97,15 @@ npm run sync
 Unchanged: browser Google OAuth via Supabase `signInWithOAuth`.
 
 ### Android (native — no Custom Tab)
-Uses `@capgo/capacitor-social-login` + Supabase `signInWithIdToken`.
+Uses `@capgo/capacitor-social-login` + Supabase `signInWithIdToken` (wired in
+`useOAuthLogin` → `loginWithNativeGoogle`).
 
-1. Install (root + Capacitor folder), then sync:
+Nothing is pre-shipped: no release keystore, no signing passwords, no Google
+client ID in `.env`. Follow the from-zero guide:
 
-```bash
-npm install @capgo/capacitor-social-login@^8
-cd src-capacitor && npm install @capgo/capacitor-social-login@^8 && npx cap sync android
-```
+**[`docs/GOOGLE_SIGNIN_SHA_SETUP.md`](docs/GOOGLE_SIGNIN_SHA_SETUP.md)**
 
-2. In **Google Cloud Console** → Credentials (same project as Supabase Google provider):
-   - Keep / create a **Web application** OAuth client → copy its Client ID into `.env` as `VITE_GOOGLE_WEB_CLIENT_ID`.
-   - Create an **Android** OAuth client with:
-     - Package name: `com.brandwala.thriftapp`
-     - SHA-1 from `cd src-capacitor/android && ./gradlew signingReport` (debug and/or release)
-
-3. In **Supabase** → Authentication → Providers → Google, use that same **Web** Client ID (and secret).
-
-4. Rebuild the app (`npm run build:android` or Android Studio).
-
-Deep link `com.brandwala.thriftapp://auth-callback` is optional now (legacy / web bridge only).
+(device Google account → create keystore → Web + Android OAuth clients → debug/release builds)
 
 ---
 
