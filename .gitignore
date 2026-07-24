@@ -70,6 +70,7 @@ src-cordova/www/
 src-capacitor/android/.gradle/
 src-capacitor/android/build/
 src-capacitor/android/app/build/
+src-capacitor/android/app/release/
 src-capacitor/android/local.properties
 src-capacitor/android/capacitor-cordova-android-plugins/
 src-capacitor/android/app/src/main/assets/public/
